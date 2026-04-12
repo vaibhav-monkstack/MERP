@@ -1,0 +1,4 @@
+/* Single-Page Application rewrite rules for Render
+   This ensures all routes like /inventory, /manager-dashboard, etc.
+   are served by index.html so React Router can handle them. */
+/*  /index.html  200
