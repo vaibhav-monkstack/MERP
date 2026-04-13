@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 /**
  * TopHeader Component
  * A consistent header section for all dashboards showing the logged-in user and logout option.
+ * Standardized on the Job Management "Master Theme".
  * 
  * @param {string} title - The main title of the page
  * @param {string} subtitle - The subtitle/description
@@ -22,92 +23,37 @@ const TopHeader = ({ title, subtitle, extraActions }) => {
   };
 
   return (
-    <header style={styles.header} className="header-responsive">
-      <div>
-        <h1 style={styles.headerTitle}>{title}</h1>
-        {subtitle && <p style={styles.headerSubtitle}>{subtitle}</p>}
+    <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12 w-full">
+      <div className="flex flex-col gap-1">
+        <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">{title}</h1>
+        {subtitle && <p className="text-slate-400 font-medium text-sm">{subtitle}</p>}
       </div>
       
       <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
         {extraActions}
         
-        {/* User badge showing the logged-in user's avatar and name */}
-        <div style={styles.userBadge}>
-          <div style={styles.avatar}>
-            <User size={18} color="#2563eb" />
+        {/* User badge */}
+        <div className="flex items-center gap-3 bg-white border border-slate-100 pl-2 pr-5 py-2 rounded-2xl shadow-sm">
+          <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
+            <User size={20} strokeWidth={2.5} />
           </div>
-          <span style={styles.userName}>{userName}</span>
+          <div className="flex flex-col">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Logged in as</span>
+            <span className="text-sm font-extrabold text-slate-700 leading-tight">{userName}</span>
+          </div>
         </div>
 
         {/* Logout button */}
-        <button onClick={handleLogout} style={styles.logoutBtn}>
+        <button 
+          onClick={handleLogout} 
+          className="flex items-center gap-2 bg-slate-900 text-white px-5 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-slate-200 hover:bg-slate-800 transition-all hover:scale-[1.02] active:scale-[0.98]"
+        >
           <LogOut size={18} />
           <span>Logout</span>
         </button>
       </div>
     </header>
   );
-};
-
-const styles = {
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: '32px',
-    width: '100%',
-    flexWrap: 'wrap',
-    gap: '20px'
-  },
-  headerTitle: {
-    fontSize: '28px',
-    fontWeight: '800',
-    color: '#111827',
-    margin: 0
-  },
-  headerSubtitle: {
-    fontSize: '14px',
-    color: '#6b7280',
-    marginTop: '4px'
-  },
-  userBadge: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    backgroundColor: 'white',
-    padding: '6px 16px 6px 6px',
-    borderRadius: '50px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-  },
-  avatar: {
-    width: '32px',
-    height: '32px',
-    backgroundColor: '#eff6ff',
-    borderRadius: '50%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  userName: {
-    fontSize: '14px',
-    fontWeight: '600',
-    color: '#374151',
-    whiteSpace: 'nowrap'
-  },
-  logoutBtn: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    backgroundColor: 'white',
-    border: '1px solid #e5e7eb',
-    padding: '8px 16px',
-    borderRadius: '8px',
-    fontSize: '14px',
-    fontWeight: '600',
-    color: '#4b5563',
-    cursor: 'pointer',
-    transition: 'all 0.2s'
-  }
 };
 
 export default TopHeader;

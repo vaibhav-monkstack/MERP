@@ -1,5 +1,4 @@
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
-import Layout from "./components/Layout";
+import { Routes, Route } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import Materials from "./pages/Materials";
 import Requests from "./pages/Requests";
@@ -8,29 +7,22 @@ import NewOrder from "./pages/NewOrder";
 import Orders from "./pages/Orders";
 
 function InventoryApp() {
-  const location = useLocation();
-  // Show sidebar everywhere EXCEPT the full-screen orders list — always show on /orders/new
-  const showSidebar = !location.pathname.startsWith("/inventory/orders") || location.pathname.startsWith("/inventory/orders/new");
+  // Strict siloing is handled in App.jsx via ProtectedRoute.
+  // This app is now exclusively for Inventory Managers handling internal stock and procurement.
 
   return (
-      <div className="flex">
-        {showSidebar && <Layout />}
-
-        <div className="flex-1 bg-gray-100 min-h-screen">
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/materials" element={<Materials />} />
-            <Route path="/requests" element={<Requests />} />
-            <Route path="/suppliers" element={<Suppliers />} />
-            {/* /orders/new MUST come before /orders to avoid premature match */}
-            <Route path="/orders/new" element={<NewOrder />} />
-            <Route path="/orders" element={<Orders />} />
-            {/* Catch-all: redirect unknown paths back to dashboard */}
-            <Route path="*" element={<Navigate to="/inventory" replace />} />
-
-          </Routes>
-        </div>
-      </div>
+    <div className="w-full bg-slate-50 min-h-screen">
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/materials" element={<Materials />} />
+        <Route path="/requests" element={<Requests />} />
+        <Route path="/suppliers" element={<Suppliers />} />
+        
+        {/* PROCUREMENT (Purchase Orders from Suppliers) */}
+        <Route path="/orders" element={<Orders />} />
+        <Route path="/orders/new" element={<NewOrder />} />
+      </Routes>
+    </div>
   );
 }
 

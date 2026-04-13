@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
 import API from "../api/api";
 import TopHeader from "../../components/TopHeader";
+import StatCard from "../../components/common/StatCard";
+import DataTable from "../../components/common/DataTable";
+import StatusBadge from "../../components/common/StatusBadge";
+import { Box, AlertTriangle, ClipboardList, Clock, Layers } from "lucide-react";
 
-// 🔥 CHART IMPORTS (PUT AT TOP)
+// 🔥 CHART IMPORTS
 import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -41,7 +45,6 @@ export default function Dashboard() {
     }
   };
 
-  // 🔴 LOW STOCK
   const safeMaterials = Array.isArray(materials) ? materials : [];
   const safeRequests = Array.isArray(requests) ? requests : [];
   const lowStock = safeMaterials.filter(m => m.quantity < 20);
@@ -53,100 +56,115 @@ export default function Dashboard() {
       {
         label: "Stock Quantity",
         data: safeMaterials.map(m => m.quantity),
-        backgroundColor: "rgba(59,130,246,0.6)",
+        backgroundColor: "rgba(99, 102, 241, 0.6)", // Indigo
+        borderRadius: 8,
       },
     ],
   };
 
+  const tableHeaders = [
+    { key: 'name', label: 'Material', sortable: false },
+    { key: 'quantity', label: 'Quantity', sortable: false },
+    { key: 'status', label: 'Alert', sortable: false, align: 'right' },
+  ];
+
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
+    <div className="min-h-screen bg-slate-50 font-sans">
+      <div className="container-custom py-8 px-6">
 
-      {/* HEADER */}
-      <TopHeader 
-        title="Inventory Management Dashboard" 
-        subtitle="Manage stock levels, materials, and warehouse requests"
-      />
+        {/* HEADER */}
+        <TopHeader 
+          title="Inventory Overview" 
+          subtitle="Real-time stock monitoring and material tracking"
+        />
 
-      {/* 🔥 LOW STOCK ALERT */}
-      {lowStock.length > 0 && (
-        <div className="bg-red-100 text-red-700 p-3 rounded mb-4">
-          ⚠ {lowStock.length} materials are low in stock!
+        {/* 🔥 LOW STOCK ALERT */}
+        {lowStock.length > 0 && (
+          <div className="bg-rose-50 border border-rose-100 text-rose-700 px-6 py-4 rounded-2xl mb-8 flex items-center gap-3 animate-pulse">
+            <AlertTriangle size={20} />
+            <span className="font-bold">{lowStock.length} materials are currently below minimum stock levels!</span>
+          </div>
+        )}
+
+        {/* 📊 STATS CARDS */}
+        <div className="stat-grid mb-10">
+          <StatCard 
+            title="Total Materials" 
+            value={safeMaterials.length} 
+            description="Cataloged items" 
+            icon={Box} 
+            iconColor="#6366f1"
+          />
+          <StatCard 
+            title="Low Stock" 
+            value={lowStock.length} 
+            description="Restock required" 
+            icon={AlertTriangle} 
+            iconColor="#f43f5e"
+          />
+          <StatCard 
+            title="Total Requests" 
+            value={safeRequests.length} 
+            description="Lifetime requests" 
+            icon={ClipboardList} 
+            iconColor="#3b82f6"
+          />
+          <StatCard 
+            title="Pending Requests" 
+            value={safeRequests.filter(r => r.status === "Pending").length} 
+            description="Awaiting approval" 
+            icon={Clock} 
+            iconColor="#f59e0b"
+          />
         </div>
-      )}
 
-      {/* 📊 CARDS */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+        {/* 📊 CHART & TABLE SECTION */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+          {/* CHART */}
+          <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
+            <div className="flex items-center gap-2 mb-6 text-slate-900 font-black tracking-tight">
+              <Layers size={18} className="text-indigo-600" />
+              <h2 className="text-lg">Stock Level Distribution</h2>
+            </div>
+            <div className="h-[300px]">
+              <Bar
+                data={chartData}
+                options={{ 
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: { display: false }
+                  },
+                  scales: {
+                    y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                    x: { grid: { display: false } }
+                  }
+                }}
+              />
+            </div>
+          </div>
 
-        <div className="bg-white p-4 rounded-xl shadow">
-          <p className="text-gray-500">Total Materials</p>
-          <h2 className="text-2xl font-bold">{materials.length}</h2>
+          {/* TABLE */}
+          <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+            <div className="p-8 border-b border-slate-50 flex items-center gap-2 text-slate-900 font-black tracking-tight">
+              <AlertTriangle size={18} className="text-rose-500" />
+              <h2 className="text-lg">Critical Low Stock</h2>
+            </div>
+            <DataTable 
+              headers={tableHeaders}
+              data={lowStock}
+              renderRow={(m) => (
+                <tr key={m.id} className="border-b border-slate-50 last:border-none hover:bg-slate-50/50 transition-colors">
+                  <td className="px-6 py-4 text-sm font-bold text-slate-800">{m.name}</td>
+                  <td className="px-6 py-4 text-sm font-black text-rose-600">{m.quantity}</td>
+                  <td className="px-6 py-4 text-right">
+                    <StatusBadge status="Low Stock" />
+                  </td>
+                </tr>
+              )}
+            />
+          </div>
         </div>
-
-        <div className="bg-white p-4 rounded-xl shadow">
-          <p className="text-gray-500">Low Stock</p>
-          <h2 className="text-2xl font-bold text-red-500">
-            {lowStock.length}
-          </h2>
-        </div>
-
-        <div className="bg-white p-4 rounded-xl shadow">
-          <p className="text-gray-500">Total Requests</p>
-          <h2 className="text-2xl font-bold">{safeRequests.length}</h2>
-        </div>
-
-        <div className="bg-white p-4 rounded-xl shadow">
-          <p className="text-gray-500">Pending Requests</p>
-          <h2 className="text-2xl font-bold">
-            {safeRequests.filter(r => r.status === "Pending").length}
-          </h2>
-        </div>
-
       </div>
-
-      {/* 📊 CHART */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-
-  <div className="bg-white p-4 rounded-xl shadow">
-    <h2 className="font-bold mb-3">Stock Overview</h2>
-
-    <div style={{ height: "250px" }}>
-      <Bar
-        data={chartData}
-        options={{ maintainAspectRatio: false }}
-      />
-    </div>
-  </div>
-  <div className="bg-white p-4 rounded-xl shadow">
-
-        <h2 className="font-bold mb-3">Low Stock Materials</h2>
-
-        <table className="w-full text-left">
-
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="p-2">Material</th>
-              <th>Quantity</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {lowStock.map(m => (
-              <tr key={m.id} className="border-t">
-                <td className="p-2">{m.name}</td>
-                <td className="text-red-500">{m.quantity}</td>
-              </tr>
-            ))}
-          </tbody>
-
-        </table>
-
-      </div>
-
-</div>
-
-      {/* 📋 LOW STOCK TABLE */}
-    
-
     </div>
   );
 }

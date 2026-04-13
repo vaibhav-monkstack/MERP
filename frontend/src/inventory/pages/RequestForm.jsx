@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import API from "../api/api";
+import { Send, ChevronDown } from "lucide-react";
 
 export default function RequestForm({ fetchData }) {
   const [materials, setMaterials] = useState([]);
@@ -60,62 +61,79 @@ export default function RequestForm({ fetchData }) {
   };
 
   return (
-    <div className="bg-white p-4 rounded-xl shadow mb-6">
+    <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8 mb-8">
 
-      <h2 className="font-bold mb-3">Create Request</h2>
+      <h2 className="text-lg font-black text-slate-900 tracking-tight mb-6">Create New Request</h2>
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-4 gap-3">
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
 
-        <input
-          placeholder="Job ID"
-          value={form.job_id}
-          onChange={(e)=>setForm({...form, job_id:e.target.value})}
-          className="border p-2 rounded"
-          required
-        />
-
-        {/* 🔥 DROPDOWN */}
-        <div>
-          <select
-            value={form.material}
-            onChange={handleMaterialChange}
-            className="border p-2 rounded w-full"
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Job ID</label>
+          <input
+            placeholder="e.g. JOB-001"
+            value={form.job_id}
+            onChange={(e) => setForm({...form, job_id: e.target.value})}
+            className="bg-slate-50 border-none rounded-2xl py-3 px-4 text-sm font-medium focus:ring-2 focus:ring-indigo-500 transition-all"
             required
-          >
-            <option value="">Select Material</option>
-            {materials.map(m => (
-              <option key={m.id} value={m.name}>
-                {m.name}
-              </option>
-            ))}
-          </select>
+          />
+        </div>
 
-          {/* 🔥 SHOW AVAILABLE STOCK */}
+        {/* DROPDOWN */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Material</label>
+          <div className="relative">
+            <select
+              value={form.material}
+              onChange={handleMaterialChange}
+              className="w-full bg-slate-50 border-none rounded-2xl py-3 px-4 pr-10 text-sm font-medium focus:ring-2 focus:ring-indigo-500 transition-all appearance-none"
+              required
+            >
+              <option value="">Select Material</option>
+              {materials.map(m => (
+                <option key={m.id} value={m.name}>
+                  {m.name}
+                </option>
+              ))}
+            </select>
+            <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          </div>
+
+          {/* SHOW AVAILABLE STOCK */}
           {selectedMaterial && (
-            <p className="text-sm text-gray-500 mt-1">
-              Available: {selectedMaterial.quantity}
+            <p className="text-[11px] font-bold text-indigo-500 mt-0.5">
+              Available: {selectedMaterial.quantity} units
             </p>
           )}
         </div>
 
-        <input
-          type="number"
-          placeholder="Quantity"
-          value={form.quantity}
-          onChange={(e)=>setForm({...form, quantity:e.target.value})}
-          className="border p-2 rounded"
-          required
-        />
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Quantity</label>
+          <input
+            type="number"
+            placeholder="0"
+            value={form.quantity}
+            onChange={(e) => setForm({...form, quantity: e.target.value})}
+            className="bg-slate-50 border-none rounded-2xl py-3 px-4 text-sm font-medium focus:ring-2 focus:ring-indigo-500 transition-all"
+            required
+          />
+        </div>
 
-        <input
-          placeholder="Requested By"
-          value={form.requested_by}
-          onChange={(e)=>setForm({...form, requested_by:e.target.value})}
-          className="border p-2 rounded"
-          required
-        />
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Requested By</label>
+          <input
+            placeholder="Your name"
+            value={form.requested_by}
+            onChange={(e) => setForm({...form, requested_by: e.target.value})}
+            className="bg-slate-50 border-none rounded-2xl py-3 px-4 text-sm font-medium focus:ring-2 focus:ring-indigo-500 transition-all"
+            required
+          />
+        </div>
 
-        <button className="col-span-4 bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
+        <button 
+          type="submit"
+          className="lg:col-span-4 md:col-span-2 flex items-center justify-center gap-2 bg-indigo-600 text-white py-3 rounded-2xl text-sm font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all hover:scale-[1.01] active:scale-[0.99]"
+        >
+          <Send size={16} />
           Submit Request
         </button>
 

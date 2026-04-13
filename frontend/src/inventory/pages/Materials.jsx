@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import API from "../api/api";
-import { FaEdit, FaTrash } from "react-icons/fa";
+import TopHeader from "../../components/TopHeader";
+import DataTable from "../../components/common/DataTable";
+import StatusBadge from "../../components/common/StatusBadge";
+import { Edit2, Trash2, Plus, Search, X } from "lucide-react";
 
 export default function Materials() {
   const [data, setData] = useState([]);
@@ -59,170 +62,172 @@ export default function Materials() {
       return true;
     });
 
+  const tableHeaders = [
+    { key: 'name', label: 'Material', sortable: false },
+    { key: 'type', label: 'Type', sortable: false },
+    { key: 'quantity', label: 'Quantity', sortable: false },
+    { key: 'supplier', label: 'Supplier', sortable: false },
+    { key: 'status', label: 'Status', sortable: false },
+    { key: 'actions', label: 'Actions', sortable: false, align: 'right' },
+  ];
+
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
+    <div className="min-h-screen bg-slate-50 font-sans">
+      <div className="container-custom py-8">
 
-      {/* HEADER */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Inventory Management</h1>
-          <p className="text-gray-500">Track and manage all materials</p>
-        </div>
-
-        <button
-          onClick={() => setShowModal(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow"
-        >
-          + Add Material
-        </button>
-      </div>
-
-      {/* FILTER */}
-      <div className="bg-white p-4 rounded-xl shadow mb-4 flex justify-between">
-
-        <input
-          type="text"
-          placeholder="Search materials..."
-          className="border p-2 rounded w-1/3"
-          onChange={(e)=>setSearch(e.target.value)}
+        {/* HEADER */}
+        <TopHeader 
+          title="Material Management" 
+          subtitle="Track and manage all materials in your inventory"
         />
 
-        <select
-          className="border p-2 rounded"
-          onChange={(e)=>setStatusFilter(e.target.value)}
-        >
-          <option value="All">All</option>
-          <option value="In">In Stock</option>
-          <option value="Low">Low Stock</option>
-        </select>
+        {/* MAIN CONTENT CARD */}
+        <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+          <div className="p-8 border-b border-slate-50 flex flex-col gap-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-black text-slate-900 tracking-tight">All Materials</h2>
+              <button
+                onClick={() => { setEditId(null); setForm({ name: "", type: "", quantity: "", supplier: "" }); setShowModal(true); }}
+                className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <Plus size={18} strokeWidth={3} />
+                <span>Add Material</span>
+              </button>
+            </div>
 
-      </div>
+            {/* FILTERS */}
+            <div className="controls-responsive">
+              <div className="relative flex-1">
+                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search materials..."
+                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all font-medium"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+              <select
+                className="bg-slate-50 border-none rounded-2xl text-sm py-3 px-4 font-bold text-slate-600 focus:ring-2 focus:ring-indigo-500"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="All">All Status</option>
+                <option value="In">In Stock</option>
+                <option value="Low">Low Stock</option>
+              </select>
+            </div>
+          </div>
 
-      {/* TABLE */}
-      <div className="bg-white rounded-xl shadow overflow-hidden">
-
-        <table className="w-full text-left">
-
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="p-3">Material</th>
-              <th>Type</th>
-              <th>Quantity</th>
-              <th>Supplier</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {filtered.map((m) => (
-              <tr key={m.id} className="border-t hover:bg-gray-50">
-
-                <td className="p-3">{m.name}</td>
-                <td>{m.type}</td>
-                <td>{m.quantity}</td>
-                <td>{m.supplier}</td>
-
-                <td>
-                  <span className={`px-2 py-1 rounded text-sm ${
-                    m.quantity < 20
-                      ? "bg-red-100 text-red-600"
-                      : "bg-green-100 text-green-600"
-                  }`}>
-                    {m.quantity < 20 ? "Low Stock" : "In Stock"}
-                  </span>
+          <DataTable
+            headers={tableHeaders}
+            data={filtered}
+            renderRow={(m) => (
+              <tr key={m.id} className="hover:bg-slate-50/80 transition-colors border-b border-slate-50 last:border-none">
+                <td className="px-6 py-5 text-sm font-bold text-slate-900">{m.name}</td>
+                <td className="px-6 py-5 text-sm font-medium text-slate-500">{m.type}</td>
+                <td className="px-6 py-5 text-sm font-bold text-slate-600">{m.quantity}</td>
+                <td className="px-6 py-5 text-sm font-medium text-slate-500">{m.supplier}</td>
+                <td className="px-6 py-5">
+                  <StatusBadge status={m.quantity < 20 ? "Low Stock" : "Active"} />
                 </td>
-
-                <td className="flex gap-2 p-2">
-
-                  <button
-                    onClick={()=>handleEdit(m)}
-                    className="bg-gray-200 p-2 rounded"
-                  >
-                    <FaEdit size={12} />
-                  </button>
-
-                  <button
-                    onClick={()=>handleDelete(m.id)}
-                    className="bg-red-500 text-white p-2 rounded"
-                  >
-                    <FaTrash size={12} />
-                  </button>
-
+                <td className="px-6 py-5">
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={() => handleEdit(m)}
+                      className="p-2 hover:bg-white hover:shadow-md rounded-xl transition-all text-slate-400 hover:text-slate-900 border border-transparent hover:border-slate-100"
+                    >
+                      <Edit2 size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(m.id)}
+                      className="p-2 hover:bg-white hover:shadow-md rounded-xl transition-all text-slate-400 hover:text-rose-600 border border-transparent hover:border-slate-100"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </td>
-
               </tr>
-            ))}
-          </tbody>
-
-        </table>
+            )}
+          />
+        </div>
       </div>
 
-      {/* 🔥 MODAL FORM */}
+      {/* MODAL FORM */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in">
+            <div className="px-8 py-6 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
+              <h2 className="text-xl font-bold text-slate-900">
+                {editId ? "Edit Material" : "Add Material"}
+              </h2>
+              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-slate-200 rounded-xl transition-colors text-slate-400 hover:text-slate-900">
+                <X size={18} />
+              </button>
+            </div>
 
-          <div className="bg-white p-6 rounded-xl w-96">
+            <form onSubmit={handleSubmit} className="px-8 py-8 flex flex-col gap-5">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Name</label>
+                <input
+                  className="bg-slate-50 border-none rounded-2xl py-3 px-4 text-sm font-medium focus:ring-2 focus:ring-indigo-500 transition-all"
+                  placeholder="Material name"
+                  value={form.name}
+                  onChange={(e) => setForm({...form, name: e.target.value})}
+                  required
+                />
+              </div>
 
-            <h2 className="text-xl font-bold mb-4">
-              {editId ? "Edit Material" : "Add Material"}
-            </h2>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Type</label>
+                <input
+                  className="bg-slate-50 border-none rounded-2xl py-3 px-4 text-sm font-medium focus:ring-2 focus:ring-indigo-500 transition-all"
+                  placeholder="Material type"
+                  value={form.type}
+                  onChange={(e) => setForm({...form, type: e.target.value})}
+                />
+              </div>
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Quantity</label>
+                <input
+                  type="number"
+                  className="bg-slate-50 border-none rounded-2xl py-3 px-4 text-sm font-medium focus:ring-2 focus:ring-indigo-500 transition-all"
+                  placeholder="0"
+                  value={form.quantity}
+                  onChange={(e) => setForm({...form, quantity: e.target.value})}
+                />
+              </div>
 
-              <input
-                className="border p-2 rounded"
-                placeholder="Name"
-                value={form.name}
-                onChange={(e)=>setForm({...form,name:e.target.value})}
-              />
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Supplier</label>
+                <input
+                  className="bg-slate-50 border-none rounded-2xl py-3 px-4 text-sm font-medium focus:ring-2 focus:ring-indigo-500 transition-all"
+                  placeholder="Supplier name"
+                  value={form.supplier}
+                  onChange={(e) => setForm({...form, supplier: e.target.value})}
+                />
+              </div>
 
-              <input
-                className="border p-2 rounded"
-                placeholder="Type"
-                value={form.type}
-                onChange={(e)=>setForm({...form,type:e.target.value})}
-              />
-
-              <input
-                type="number"
-                className="border p-2 rounded"
-                placeholder="Quantity"
-                value={form.quantity}
-                onChange={(e)=>setForm({...form,quantity:e.target.value})}
-              />
-
-              <input
-                className="border p-2 rounded"
-                placeholder="Supplier"
-                value={form.supplier}
-                onChange={(e)=>setForm({...form,supplier:e.target.value})}
-              />
-
-              <div className="flex justify-end gap-2 mt-3">
+              <div className="flex justify-end gap-3 mt-2">
                 <button
                   type="button"
-                  onClick={()=>setShowModal(false)}
-                  className="px-3 py-1 bg-gray-300 rounded"
+                  onClick={() => setShowModal(false)}
+                  className="px-5 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-200 transition-all"
                 >
                   Cancel
                 </button>
-
                 <button
                   type="submit"
-                  className="bg-blue-600 text-white px-3 py-1 rounded"
+                  className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  Save
+                  {editId ? "Update" : "Save"}
                 </button>
               </div>
-
             </form>
-
           </div>
         </div>
       )}
-
     </div>
   );
 }
-

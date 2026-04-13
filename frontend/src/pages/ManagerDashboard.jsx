@@ -18,13 +18,12 @@ import {
   Trash2,        // Delete job action icon
   Users          // Manage teams button icon
 } from 'lucide-react';
-import TopHeader from '../components/TopHeader';
 
-// ============================================================
-// MANAGER DASHBOARD — Main control panel for Job Managers
-// Shows all manufacturing jobs in a filterable, searchable table
-// with status stats, action buttons, and navigation to other pages.
-// ============================================================
+// Shared Components
+import TopHeader from '../components/TopHeader';
+import StatCard from '../components/common/StatCard';
+import DataTable from '../components/common/DataTable';
+import StatusBadge from '../components/common/StatusBadge';
 
 // Import toast for notifications
 import toast from 'react-hot-toast';
@@ -34,18 +33,17 @@ const ManagerDashboard = () => {
   const { jobs, deleteJob, loading } = useJobs();
   // Local state for the filtered/searched list of jobs shown in the table
   const [filteredJobs, setFilteredJobs] = useState([]);
-  // Search input text (filters by product name or team name)
+  // Search input text
   const [searchTerm, setSearchTerm] = useState('');
-  // Dropdown filter for job status (e.g., "Production", "Completed", "Rework")
+  // Dropdown filter for job status
   const [statusFilter, setStatusFilter] = useState('All Status');
-  // Dropdown filter for job priority (e.g., "High", "Urgent")
+  // Dropdown filter for job priority
   const [priorityFilter, setPriorityFilter] = useState('All Priorities');
   
   // Sorting state
   const [sortConfig, setSortConfig] = useState({ key: 'id', direction: 'desc' });
   
   const navigate = useNavigate();
-  // Get the logged-in user's role and token from localStorage
   const role = localStorage.getItem('role');
   const token = localStorage.getItem('token');
 
@@ -58,7 +56,7 @@ const ManagerDashboard = () => {
 
   // Handle deletion with confirmation
   const handleDeleteJob = async (jobId) => {
-    if (window.confirm('Are you sure you want to delete this job permanently? This action cannot be undone.')) {
+    if (window.confirm('Are you sure you want to delete this job permanently?')) {
       try {
         await deleteJob(jobId);
         toast.success('Job deleted successfully');
@@ -79,9 +77,8 @@ const ManagerDashboard = () => {
 
   // Filter and sort jobs whenever necessary
   useEffect(() => {
-    let result = [...jobs]; // Create a copy
+    let result = [...jobs];
 
-    // Apply text search filter — matches product name or team name or Job ID
     if (searchTerm) {
       const lowerSearch = searchTerm.toLowerCase();
       result = result.filter(job => 
@@ -91,22 +88,18 @@ const ManagerDashboard = () => {
       );
     }
 
-    // Apply status dropdown filter
     if (statusFilter !== 'All Status') {
       result = result.filter(job => job.status === statusFilter);
     }
 
-    // Apply priority dropdown filter
     if (priorityFilter !== 'All Priorities') {
       result = result.filter(job => job.priority === priorityFilter);
     }
 
-    // Apply sorting
     result.sort((a, b) => {
       let valA = a[sortConfig.key];
       let valB = b[sortConfig.key];
       
-      // Handle numeric/date sorting
       if (sortConfig.key === 'progress' || sortConfig.key === 'quantity') {
         valA = Number(valA);
         valB = Number(valB);
@@ -117,252 +110,213 @@ const ManagerDashboard = () => {
       return 0;
     });
 
-    setFilteredJobs(result); // Update the displayed jobs
+    setFilteredJobs(result);
   }, [searchTerm, statusFilter, priorityFilter, jobs, sortConfig]);
 
-  // Handle logout — clear all stored data and redirect to login
-  const handleLogout = () => {
-    localStorage.clear();     // Remove token, role, userId, userName
-    navigate('/login');        // Redirect to login page
-    toast.success('Logged out successfully');
-  };
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+    </div>
+  );
 
-  // Returns color scheme (background + text) for a given job status
-  // Used for the colored status badges in the job table
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Production': return { bg: '#dbeafe', text: '#1e40af' };  // Blue
-      case 'Assembly': return { bg: '#f3e8ff', text: '#6b21a8' };    // Purple
-      case 'Created': return { bg: '#f3f4f6', text: '#374151' };     // Gray
-      case 'QC': return { bg: '#fef9c3', text: '#854d0e' };          // Yellow
-      case 'Completed': return { bg: '#dcfce7', text: '#166534' };   // Green
-      case 'Rework': return { bg: '#fee2e2', text: '#991b1b' };      // Red
-      default: return { bg: '#f3f4f6', text: '#374151' };            // Default gray
-    }
-  };
+  // Table Headers Definition
+  const tableHeaders = [
+    { key: 'id', label: 'Job ID', sortable: true },
+    { key: 'product', label: 'Product', sortable: true },
+    { key: 'quantity', label: 'Qty', sortable: true },
+    { key: 'team', label: 'Team', sortable: true },
+    { key: 'status', label: 'Status', sortable: true },
+    { key: 'priority', label: 'Priority', sortable: true },
+    { key: 'progress', label: 'Progress', sortable: true },
+    { key: 'deadline', label: 'Deadline', sortable: true },
+    { key: 'actions', label: 'Actions', sortable: false, align: 'right' },
+  ];
 
-  // Returns color scheme for a given priority level
-  // Used for the colored priority badges in the job table
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'Urgent': return { bg: '#fee2e2', text: '#991b1b' };  // Red
-      case 'High': return { bg: '#1f2937', text: '#ffffff' };    // Dark (high contrast)
-      case 'Medium': return { bg: '#f3f4f6', text: '#4b5563' };  // Gray
-      case 'Low': return { bg: '#eff6ff', text: '#3b82f6' };     // Light blue
-      default: return { bg: '#f3f4f6', text: '#4b5563' };        // Default gray
-    }
-  };
-
-  // Show loading state while jobs are being fetched from the backend
-  if (loading) return <div style={{ padding: '40px', textAlign: 'center' }}>Loading...</div>;
-
-  // === RENDER — Manager Dashboard UI ===
   return (
-    <div style={styles.pageBackground} className="container-custom">
-      {/* === HEADER — Title, user info, and navigation buttons === */}
-      <TopHeader 
-        title="Job Management Dashboard" 
-        subtitle="Manage and track all manufacturing jobs"
-        extraActions={
-          <button onClick={() => navigate('/manage-teams')} style={styles.manageTeamsBtn}>
-            <Users size={18} />
-            <span>Manage Teams</span>
-          </button>
-        }
-      />
+    <div className="min-h-screen bg-slate-50 font-sans">
+      <div className="container-custom py-8">
+        
+        {/* HEADER */}
+        <TopHeader 
+          title="Job Management" 
+          subtitle="Real-time monitoring and production control"
+          extraActions={
+            <button 
+              onClick={() => navigate('/manage-teams')} 
+              className="flex items-center gap-2 bg-white text-slate-700 border border-slate-200 px-4 py-2 rounded-xl text-sm font-bold shadow-sm hover:bg-slate-50 transition-all"
+            >
+              <Users size={18} className="text-indigo-600" />
+              <span>Manage Teams</span>
+            </button>
+          }
+        />
 
-      {/* === STATS ROW — Four cards showing job counts === */}
-      <div className="stat-grid mb-8">
-        {/* Total jobs count */}
-        <div style={styles.statCard}>
-          <div style={styles.statCardHeader}><span style={styles.statTitle}>Total Jobs</span><Briefcase size={20} color="#6b7280" /></div>
-          <div style={styles.statNumber}>{jobs.length}</div>
-          <div style={styles.statDesc}>All jobs in system</div>
-        </div>
-        {/* In-progress jobs count (not created and not completed) */}
-        <div style={styles.statCard}>
-          <div style={styles.statCardHeader}><span style={styles.statTitle}>In Progress</span><Clock size={20} color="#2563eb" /></div>
-          <div style={styles.statNumber}>{jobs.filter(j => j.status !== 'Completed' && j.status !== 'Created').length}</div>
-          <div style={styles.statDesc}>Currently active</div>
-        </div>
-        {/* Completed jobs count */}
-        <div style={styles.statCard}>
-          <div style={styles.statCardHeader}><span style={styles.statTitle}>Completed</span><CheckCircle size={20} color="#166534" /></div>
-          <div style={styles.statNumber}>{jobs.filter(j => j.status === 'Completed').length}</div>
-          <div style={styles.statDesc}>Finished jobs</div>
-        </div>
-        {/* Overdue jobs count — calculated based on deadline and status */}
-        <div style={styles.statCard}>
-          <div style={styles.statCardHeader}><span style={styles.statTitle}>Overdue</span><AlertCircle size={20} color="#991b1b" /></div>
-          <div style={styles.statNumber}>
-            {jobs.filter(j => {
+        {/* STATS ROW */}
+        <div className="stat-grid mb-10">
+          <StatCard 
+            title="Total Jobs" 
+            value={jobs.length} 
+            description="All jobs in system" 
+            icon={Briefcase} 
+            iconColor="#6366f1"
+          />
+          <StatCard 
+            title="In Progress" 
+            value={jobs.filter(j => j.status !== 'Completed' && j.status !== 'Created').length} 
+            description="Currently active" 
+            icon={Clock} 
+            iconColor="#3b82f6"
+          />
+          <StatCard 
+            title="Completed" 
+            value={jobs.filter(j => j.status === 'Completed').length} 
+            description="Finished jobs" 
+            icon={CheckCircle} 
+            iconColor="#10b981"
+          />
+          <StatCard 
+            title="Overdue" 
+            value={jobs.filter(j => {
               if (!j.deadline || j.status === 'Completed') return false;
               const deadlineDate = new Date(j.deadline);
               deadlineDate.setHours(23, 59, 59, 999);
               return new Date() > deadlineDate;
-            }).length}
-          </div>
-          <div style={styles.statDesc}>Past deadline</div>
+            }).length} 
+            description="Past deadline" 
+            icon={AlertCircle} 
+            iconColor="#f43f5e"
+          />
         </div>
-      </div>
 
-      {/* === JOB LIST TABLE — Main content area === */}
-      <div style={styles.mainCard}>
-        <div style={styles.mainCardHeader}>
-          <h2 style={styles.mainCardTitle}>Job List</h2>
-          {/* Controls: search bar, status/priority filters, and create button */}
-          <div className="controls-responsive">
-            {/* Search bar with magnifying glass icon */}
-            <div className="relative flex-1 min-w-0 md:max-w-md">
-              <Search size={18} style={styles.searchIcon} color="#9ca3af" />
-              <input 
-                type="text" 
-                placeholder="Search by product or team..." 
-                style={styles.searchInput}
-                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Status filter dropdown — includes all possible statuses plus "Rework" */}
-              <select style={styles.select} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-                <option>All Status</option>
-                <option>Production</option>
-                <option>Assembly</option>
-                <option>Created</option>
-                <option>QC</option>
-                <option>Rework</option>
-                <option>Completed</option>
-              </select>
-              {/* Priority filter dropdown */}
-              <select style={styles.select} value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)}>
-                <option>All Priorities</option>
-                <option>Urgent</option>
-                <option>High</option>
-                <option>Medium</option>
-                <option>Low</option>
-              </select>
-              {/* Create New Job button — navigates to the job creation form */}
-              <button style={styles.createBtn} onClick={() => navigate('/create-job')}>
-                <Plus size={18} />
+        {/* MAIN CONTENT CARD */}
+        <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+          <div className="p-8 border-b border-slate-50 flex flex-col gap-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-black text-slate-900 tracking-tight">Active Job List</h2>
+              <button 
+                className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                onClick={() => navigate('/create-job')}
+              >
+                <Plus size={18} strokeWidth={3} />
                 <span>Create New Job</span>
               </button>
             </div>
-          </div>
-        </div>
 
-        {/* === JOB TABLE — Sortable table of all filtered jobs === */}
-        <div className="table-container">
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th style={{ ...styles.th, cursor: 'pointer' }} onClick={() => handleSort('id')}>
-                  Job ID {sortConfig.key === 'id' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                </th>
-                <th style={{ ...styles.th, cursor: 'pointer' }} onClick={() => handleSort('product')}>
-                  Product {sortConfig.key === 'product' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                </th>
-                <th style={{ ...styles.th, cursor: 'pointer' }} onClick={() => handleSort('quantity')}>
-                  Qty {sortConfig.key === 'quantity' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                </th>
-                <th style={{ ...styles.th, cursor: 'pointer' }} onClick={() => handleSort('team')}>
-                  Team {sortConfig.key === 'team' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                </th>
-                <th style={{ ...styles.th, cursor: 'pointer' }} onClick={() => handleSort('status')}>
-                  Status {sortConfig.key === 'status' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                </th>
-                <th style={{ ...styles.th, cursor: 'pointer' }} onClick={() => handleSort('priority')}>
-                  Priority {sortConfig.key === 'priority' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                </th>
-                <th style={{ ...styles.th, cursor: 'pointer' }} onClick={() => handleSort('progress')}>
-                  Progress {sortConfig.key === 'progress' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                </th>
-                <th style={{ ...styles.th, cursor: 'pointer' }} onClick={() => handleSort('deadline')}>
-                  Deadline {sortConfig.key === 'deadline' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                </th>
-                <th style={styles.th}>Actions</th>
+            {/* FILTERS */}
+            <div className="controls-responsive">
+              <div className="relative flex-1">
+                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input 
+                  type="text" 
+                  placeholder="Search products, teams, or IDs..." 
+                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all font-medium"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <div className="flex items-center gap-3">
+                <select 
+                  className="bg-slate-50 border-none rounded-2xl text-sm py-3 px-4 font-bold text-slate-600 focus:ring-2 focus:ring-indigo-500"
+                  value={statusFilter} 
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                >
+                  <option>All Status</option>
+                  <option>Production</option>
+                  <option>Assembly</option>
+                  <option>Created</option>
+                  <option>QC</option>
+                  <option>Rework</option>
+                  <option>Completed</option>
+                </select>
+                <select 
+                  className="bg-slate-50 border-none rounded-2xl text-sm py-3 px-4 font-bold text-slate-600 focus:ring-2 focus:ring-indigo-500"
+                  value={priorityFilter} 
+                  onChange={(e) => setPriorityFilter(e.target.value)}
+                >
+                  <option>All Priorities</option>
+                  <option>Urgent</option>
+                  <option>High</option>
+                  <option>Medium</option>
+                  <option>Low</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <DataTable 
+            headers={tableHeaders}
+            data={filteredJobs}
+            onSort={handleSort}
+            sortConfig={sortConfig}
+            renderRow={(job) => (
+              <tr 
+                key={job.id} 
+                className="hover:bg-slate-50/80 transition-colors cursor-pointer group border-b border-slate-50 last:border-none"
+                onClick={() => navigate(`/job/${job.id}`)}
+              >
+                <td className="px-6 py-5 text-xs font-black text-slate-400 font-mono">{job.id}</td>
+                <td className="px-6 py-5 text-sm font-bold text-slate-900">{job.product}</td>
+                <td className="px-6 py-5 text-sm font-bold text-slate-600">{job.quantity}</td>
+                <td className="px-6 py-5 text-sm font-medium text-slate-500">{job.team}</td>
+                <td className="px-6 py-5">
+                  <StatusBadge status={job.status} />
+                </td>
+                <td className="px-6 py-5">
+                  <div className={`text-[10px] font-black uppercase px-2 py-0.5 rounded inline-block ${
+                    job.priority === 'Urgent' ? 'bg-rose-100 text-rose-600' :
+                    job.priority === 'High' ? 'bg-slate-900 text-white' :
+                    'bg-slate-100 text-slate-500'
+                  }`}>
+                    {job.priority}
+                  </div>
+                </td>
+                <td className="px-6 py-5">
+                  <div className="flex flex-col gap-1.5 w-24">
+                    <div className="flex justify-between items-center text-[10px] font-bold text-slate-400">
+                      <span>Progress</span>
+                      <span className="text-slate-900">{job.progress}%</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${job.progress}%` }}></div>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-6 py-5 text-sm font-bold text-slate-500">{job.deadline}</td>
+                <td className="px-6 py-5" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex justify-end gap-2">
+                    <button 
+                      onClick={() => navigate(`/job/${job.id}`)}
+                      className="p-2 hover:bg-white hover:shadow-md rounded-xl transition-all text-slate-400 hover:text-indigo-600 border border-transparent hover:border-slate-100"
+                    >
+                      <Eye size={16} />
+                    </button>
+                    <button 
+                      onClick={() => navigate(`/job/${job.id}/tasks`)}
+                      className="p-2 hover:bg-white hover:shadow-md rounded-xl transition-all text-slate-400 hover:text-blue-600 border border-transparent hover:border-slate-100"
+                    >
+                      <BarChart2 size={16} />
+                    </button>
+                    <button 
+                      onClick={() => navigate(`/jobs/${job.id}/edit`)}
+                      className="p-2 hover:bg-white hover:shadow-md rounded-xl transition-all text-slate-400 hover:text-slate-900 border border-transparent hover:border-slate-100"
+                    >
+                      <Edit2 size={16} />
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteJob(job.id)}
+                      className="p-2 hover:bg-white hover:shadow-md rounded-xl transition-all text-slate-400 hover:text-rose-600 border border-transparent hover:border-slate-100"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {/* Render each filtered job as a table row */}
-              {filteredJobs.map((job) => (
-                <tr key={job.id} style={styles.tr} onClick={() => navigate(`/job/${job.id}`)}>
-                  <td style={styles.td}>{job.id}</td>
-                  <td style={styles.tdBold}>{job.product}</td>
-                  <td style={styles.td}>{job.quantity}</td>
-                  <td style={styles.td}>{job.team}</td>
-                  {/* Status badge with dynamic color */}
-                  <td style={styles.td}>
-                    <span style={{ ...styles.badge, backgroundColor: getStatusColor(job.status).bg, color: getStatusColor(job.status).text }}>
-                      {job.status}
-                    </span>
-                  </td>
-                  {/* Priority badge with dynamic color */}
-                  <td style={styles.td}>
-                    <span style={{ ...styles.badge, backgroundColor: getPriorityColor(job.priority).bg, color: getPriorityColor(job.priority).text }}>
-                      {job.priority}
-                    </span>
-                  </td>
-                  {/* Progress bar with percentage text */}
-                  <td style={styles.td}>
-                    <div style={styles.progressContainer}>
-                      <span style={styles.progressText}>{job.progress}%</span>
-                      <div style={styles.progressBarBg}><div style={{ ...styles.progressBarFill, width: `${job.progress}%` }}></div></div>
-                    </div>
-                  </td>
-                  <td style={styles.td}>{job.deadline}</td>
-                  {/* Action buttons — stop row click propagation so buttons work independently */}
-                  <td style={styles.td} onClick={(e) => e.stopPropagation()}>
-                    <div style={styles.actionButtons}>
-                      {/* View job details */}
-                      <button style={styles.actionBtn} title="View" onClick={() => navigate(`/job/${job.id}`)}><Eye size={16} color="#4b5563" /></button>
-                      {/* View worker tasks for this job */}
-                      <button style={styles.actionBtn} title="Worker Tasks" onClick={() => navigate(`/job/${job.id}/tasks`)}><BarChart2 size={16} color="#4b5563" /></button>
-                      {/* Edit job details */}
-                      <button style={styles.actionBtn} title="Edit" onClick={() => navigate(`/jobs/${job.id}/edit`)}><Edit2 size={16} color="#4b5563" /></button>
-                      {/* Delete job permanently */}
-                      <button style={styles.actionBtn} title="Delete" onClick={() => handleDeleteJob(job.id)}><Trash2 size={16} color="#ef4444" /></button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+            )}
+          />
         </div>
       </div>
     </div>
   );
 };
 
-// ============================================================
-// STYLES — CSS-in-JS style definitions for the Manager Dashboard
-// ============================================================
-const styles = {
-  pageBackground: { minHeight: '100vh', backgroundColor: '#f3f4f6', fontFamily: "'Inter', sans-serif" },
-  manageTeamsBtn: { display: 'flex', alignItems: 'center', gap: '8px', background: 'linear-gradient(135deg, #6366f1, #4f46e5)', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s' },
-  statCard: { backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' },
-  statCardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' },
-  statTitle: { fontSize: '14px', fontWeight: '600', color: '#6b7280' },
-  statNumber: { fontSize: '28px', fontWeight: '700', color: '#111827', marginBottom: '4px' },
-  statDesc: { fontSize: '12px', color: '#9ca3af' },
-  mainCard: { backgroundColor: 'white', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', overflow: 'hidden' },
-  mainCardHeader: { padding: '24px', borderBottom: '1px solid #f3f4f6' },
-  mainCardTitle: { fontSize: '18px', fontWeight: '700', color: '#111827', marginBottom: '20px' },
-  createBtn: { display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#2563eb', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' },
-  table: { width: '100%', borderCollapse: 'collapse', textAlign: 'left' },
-  th: { padding: '16px 24px', backgroundColor: '#f9fafb', fontSize: '12px', fontWeight: '600', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid #f3f4f6' },
-  tr: { transition: 'background-color 0.2s', borderBottom: '1px solid #f3f4f6', cursor: 'pointer' },
-  td: { padding: '16px 24px', fontSize: '14px', color: '#4b5563', verticalAlign: 'middle' },
-  tdBold: { padding: '16px 24px', fontSize: '14px', fontWeight: '600', color: '#111827', verticalAlign: 'middle' },
-  badge: { padding: '4px 12px', borderRadius: '50px', fontSize: '12px', fontWeight: '600', display: 'inline-block' },
-  progressContainer: { display: 'flex', flexDirection: 'column', gap: '6px', width: '120px' },
-  progressText: { fontSize: '12px', fontWeight: '600', color: '#374151' },
-  progressBarBg: { width: '100%', height: '6px', backgroundColor: '#e5e7eb', borderRadius: '3px', overflow: 'hidden' },
-  progressBarFill: { height: '100%', backgroundColor: '#2563eb', borderRadius: '3px' },
-  actionButtons: { display: 'flex', gap: '8px' },
-  actionBtn: { padding: '6px', borderRadius: '6px', border: '1px solid #e5e7eb', backgroundColor: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-};
-
-// Export the ManagerDashboard component as default
 export default ManagerDashboard;

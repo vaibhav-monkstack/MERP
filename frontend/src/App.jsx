@@ -19,6 +19,7 @@ import ProtectedRoute from './components/ProtectedRoute'; // RBAC protection com
 
 // --- INVENTORY APP ---
 import InventoryApp from './inventory/InventoryApp';
+import OrderApp from './pages/OrderApp';
 
 // --- UNIFIED NAVBAR ---
 import UnifiedNavbar from './components/UnifiedNavbar';
@@ -90,10 +91,17 @@ function App() {
             </ProtectedRoute>
           } />
           
-          {/* Inventory App Portal — Inventory Manager only */}
+          {/* Inventory Module — Strictly for Inventory Managers */}
           <Route path="/inventory/*" element={
             <ProtectedRoute allowedRoles={['Inventory Manager']}>
               <InventoryApp />
+            </ProtectedRoute>
+          } />
+
+          {/* Customer Orders Module — Strictly for Order Managers */}
+          <Route path="/orders/*" element={
+            <ProtectedRoute allowedRoles={['Order Manager']}>
+              <OrderApp />
             </ProtectedRoute>
           } />
 

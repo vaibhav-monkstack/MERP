@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import API from "../api/api";
-import { FaCheck, FaTimes } from "react-icons/fa";
+import TopHeader from "../../components/TopHeader";
+import StatCard from "../../components/common/StatCard";
+import DataTable from "../../components/common/DataTable";
+import StatusBadge from "../../components/common/StatusBadge";
 import RequestForm from "./RequestForm";
+import { ClipboardList, Clock, CheckCircle, Loader, Search, CheckCheck, XCircle } from "lucide-react";
 
 export default function Requests() {
   const [data, setData] = useState([]);
@@ -24,14 +28,14 @@ export default function Requests() {
     }
   };
 
-  // 🔥 COUNTS
+  // COUNTS
   const safeData = Array.isArray(data) ? data : [];
   const total = safeData.length;
   const pending = safeData.filter(r => r.status === "Pending").length;
   const approved = safeData.filter(r => r.status === "Approved").length;
   const inProgress = safeData.filter(r => r.status === "In Progress").length;
 
-  // 🔥 SELECT
+  // SELECT
   const handleSelect = (id) => {
     setSelected(prev =>
       prev.includes(id)
@@ -40,14 +44,14 @@ export default function Requests() {
     );
   };
 
-  // 🔥 UPDATE SINGLE
+  // UPDATE SINGLE
   const update = async (id, status) => {
     const res = await API.put(`/requests/${id}`, { status });
     alert(res.data.message);
     fetchData();
   };
 
-  // 🔥 BULK UPDATE
+  // BULK UPDATE
   const bulkUpdate = async (status) => {
     for (let id of selected) {
       await API.put(`/requests/${id}`, { status });
@@ -57,7 +61,7 @@ export default function Requests() {
     fetchData();
   };
 
-  // 🔍 FILTER + SEARCH
+  // FILTER + SEARCH
   const filtered = safeData
     .filter(r => {
       if (filter === "Pending") return r.status === "Pending";
@@ -69,161 +73,170 @@ export default function Requests() {
       r.material && r.material.toLowerCase().includes(search.toLowerCase())
     );
 
+  const tableHeaders = [
+    { key: 'checkbox', label: '', sortable: false },
+    { key: 'request_id', label: 'Request ID', sortable: false },
+    { key: 'job_id', label: 'Job ID', sortable: false },
+    { key: 'material', label: 'Material', sortable: false },
+    { key: 'quantity', label: 'Qty', sortable: false },
+    { key: 'requested_by', label: 'Requested By', sortable: false },
+    { key: 'date', label: 'Date', sortable: false },
+    { key: 'status', label: 'Status', sortable: false },
+    { key: 'actions', label: 'Actions', sortable: false, align: 'right' },
+  ];
+
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
+    <div className="min-h-screen bg-slate-50 font-sans">
+      <div className="container-custom py-8">
 
-      {/* 🔥 REQUEST FORM */}
-      <RequestForm fetchData={fetchData} />
+        {/* HEADER */}
+        <TopHeader 
+          title="Material Requests" 
+          subtitle="Manage and track all material requisitions"
+        />
 
-      <h1 className="text-2xl font-bold mb-4">Material Requests</h1>
+        {/* REQUEST FORM */}
+        <RequestForm fetchData={fetchData} />
 
-      {/* 🔥 CARDS */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
-
-        <div onClick={()=>setFilter("All")}
-          className="bg-white p-4 rounded-xl shadow cursor-pointer">
-          <p>Total</p>
-          <h2 className="text-2xl font-bold">{total}</h2>
+        {/* STATS */}
+        <div className="stat-grid mb-10">
+          <StatCard 
+            title="Total Requests" 
+            value={total} 
+            description="Lifetime requests" 
+            icon={ClipboardList} 
+            iconColor="#6366f1"
+          />
+          <StatCard 
+            title="Pending" 
+            value={pending} 
+            description="Awaiting review" 
+            icon={Clock} 
+            iconColor="#f59e0b"
+          />
+          <StatCard 
+            title="Approved" 
+            value={approved} 
+            description="Ready to fulfill" 
+            icon={CheckCircle} 
+            iconColor="#10b981"
+          />
+          <StatCard 
+            title="In Progress" 
+            value={inProgress} 
+            description="Being processed" 
+            icon={Loader} 
+            iconColor="#3b82f6"
+          />
         </div>
 
-        <div onClick={()=>setFilter("Pending")}
-          className="bg-white p-4 rounded-xl shadow cursor-pointer">
-          <p>Pending</p>
-          <h2 className="text-2xl font-bold text-yellow-500">{pending}</h2>
-        </div>
+        {/* MAIN CONTENT CARD */}
+        <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+          <div className="p-8 border-b border-slate-50 flex flex-col gap-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-black text-slate-900 tracking-tight">Request Queue</h2>
+              {selected.length > 0 && (
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-bold text-slate-400">{selected.length} selected</span>
+                  <button
+                    onClick={() => bulkUpdate("Approved")}
+                    className="flex items-center gap-1.5 bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm hover:bg-emerald-700 transition-all"
+                  >
+                    <CheckCheck size={14} />
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => bulkUpdate("Rejected")}
+                    className="flex items-center gap-1.5 bg-rose-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm hover:bg-rose-700 transition-all"
+                  >
+                    <XCircle size={14} />
+                    Reject
+                  </button>
+                </div>
+              )}
+            </div>
 
-        <div onClick={()=>setFilter("Approved")}
-          className="bg-white p-4 rounded-xl shadow cursor-pointer">
-          <p>Approved</p>
-          <h2 className="text-2xl font-bold text-green-500">{approved}</h2>
-        </div>
-
-        <div onClick={()=>setFilter("In Progress")}
-          className="bg-white p-4 rounded-xl shadow cursor-pointer">
-          <p>In Progress</p>
-          <h2 className="text-2xl font-bold text-blue-500">{inProgress}</h2>
-        </div>
-
-      </div>
-
-      {/* 🔥 SHOW ACTION BAR ONLY IF DATA EXISTS */}
-      {data.length > 0 && (
-        <div className="bg-white p-4 rounded-xl shadow mb-4 flex justify-between">
-
-          <div className="flex gap-2">
-            <button
-              onClick={() => bulkUpdate("Approved")}
-              className="bg-green-500 text-white px-3 py-1 rounded"
-            >
-              Approve Selected
-            </button>
-
-            <button
-              onClick={() => bulkUpdate("Rejected")}
-              className="bg-red-500 text-white px-3 py-1 rounded"
-            >
-              Reject Selected
-            </button>
+            {/* SEARCH */}
+            <div className="controls-responsive">
+              <div className="relative flex-1">
+                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search by material name..."
+                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all font-medium"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+              <select
+                className="bg-slate-50 border-none rounded-2xl text-sm py-3 px-4 font-bold text-slate-600 focus:ring-2 focus:ring-indigo-500"
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+              >
+                <option value="All">All Status</option>
+                <option value="Pending">Pending</option>
+                <option value="Approved">Approved</option>
+                <option value="In Progress">In Progress</option>
+              </select>
+            </div>
           </div>
 
-          <input
-            type="text"
-            placeholder="Search requests..."
-            className="border p-2 rounded"
-            onChange={(e)=>setSearch(e.target.value)}
-          />
-
-        </div>
-      )}
-
-      {/* 🔥 EMPTY STATE */}
-      {data.length === 0 ? (
-        <div className="bg-white p-10 rounded-xl shadow text-center text-gray-500">
-          🚫 No Requests Yet
-        </div>
-      ) : (
-
-        <div className="bg-white rounded-xl shadow overflow-hidden">
-
-          <table className="w-full text-left">
-
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="p-3"></th>
-                <th>Request ID</th>
-                <th>Job ID</th>
-                <th>Material</th>
-                <th>Quantity</th>
-                <th>Requested By</th>
-                <th>Date</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {filtered.map((r) => (
-                <tr key={r.id} className="border-t hover:bg-gray-50">
-
-                  <td className="p-3">
+          {/* EMPTY STATE */}
+          {data.length === 0 ? (
+            <div className="px-8 py-16 text-center">
+              <div className="text-4xl mb-3">📋</div>
+              <p className="text-lg font-bold text-slate-300">No Requests Yet</p>
+              <p className="text-sm text-slate-400 mt-1">Use the form above to create your first request.</p>
+            </div>
+          ) : (
+            <DataTable
+              headers={tableHeaders}
+              data={filtered}
+              renderRow={(r) => (
+                <tr key={r.id} className="hover:bg-slate-50/80 transition-colors border-b border-slate-50 last:border-none">
+                  <td className="px-6 py-5">
                     <input
                       type="checkbox"
                       checked={selected.includes(r.id)}
                       onChange={() => handleSelect(r.id)}
+                      className="w-4 h-4 rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                     />
                   </td>
-
-                  <td>{r.request_id}</td>
-                  <td>{r.job_id}</td>
-                  <td>{r.material}</td>
-                  <td>{r.quantity}</td>
-                  <td>{r.requested_by}</td>
-
-                  <td>
+                  <td className="px-6 py-5 text-xs font-black text-slate-400 font-mono">{r.request_id}</td>
+                  <td className="px-6 py-5 text-xs font-black text-slate-400 font-mono">{r.job_id}</td>
+                  <td className="px-6 py-5 text-sm font-bold text-slate-900">{r.material}</td>
+                  <td className="px-6 py-5 text-sm font-bold text-slate-600">{r.quantity}</td>
+                  <td className="px-6 py-5 text-sm font-medium text-slate-500">{r.requested_by}</td>
+                  <td className="px-6 py-5 text-sm font-medium text-slate-400">
                     {new Date(r.requested_at).toLocaleDateString()}
                   </td>
-
-                  <td>
-                    <span className={`px-2 py-1 rounded text-sm ${
-                      r.status === "Approved"
-                        ? "bg-green-100 text-green-600"
-                        : r.status === "Rejected"
-                        ? "bg-red-100 text-red-600"
-                        : r.status === "In Progress"
-                        ? "bg-blue-100 text-blue-600"
-                        : "bg-yellow-100 text-yellow-600"
-                    }`}>
-                      {r.status}
-                    </span>
+                  <td className="px-6 py-5">
+                    <StatusBadge status={r.status} />
                   </td>
-
-                  <td className="flex gap-2 p-2">
-
-                    <button
-                      onClick={()=>update(r.id, "Approved")}
-                      className="bg-green-500 text-white p-2 rounded"
-                    >
-                      <FaCheck size={12} />
-                    </button>
-
-                    <button
-                      onClick={()=>update(r.id, "Rejected")}
-                      className="bg-red-500 text-white p-2 rounded"
-                    >
-                      <FaTimes size={12} />
-                    </button>
-
+                  <td className="px-6 py-5">
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={() => update(r.id, "Approved")}
+                        className="p-2 hover:bg-emerald-50 hover:shadow-sm rounded-xl transition-all text-slate-400 hover:text-emerald-600 border border-transparent hover:border-emerald-100"
+                        title="Approve"
+                      >
+                        <CheckCircle size={16} />
+                      </button>
+                      <button
+                        onClick={() => update(r.id, "Rejected")}
+                        className="p-2 hover:bg-rose-50 hover:shadow-sm rounded-xl transition-all text-slate-400 hover:text-rose-600 border border-transparent hover:border-rose-100"
+                        title="Reject"
+                      >
+                        <XCircle size={16} />
+                      </button>
+                    </div>
                   </td>
-
                 </tr>
-              ))}
-            </tbody>
-
-          </table>
-
+              )}
+            />
+          )}
         </div>
-      )}
-
+      </div>
     </div>
   );
 }

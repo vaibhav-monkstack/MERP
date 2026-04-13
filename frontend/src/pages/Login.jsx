@@ -53,7 +53,7 @@ const Login = () => {
       // Redirect to the appropriate dashboard based on the user's role
       const redirectionMap = {
         'Job Manager': '/manager-dashboard',
-        'Order Manager': '/inventory/orders',
+        'Order Manager': '/orders',
         'Inventory Manager': '/inventory',
         'Production Staff': '/worker-dashboard'
       };

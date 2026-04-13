@@ -10,6 +10,7 @@
 @source "./context/**/*.{js,ts,jsx,tsx}";
 @source "./pages/**/*.{js,ts,jsx,tsx}";
 @source "./utils/**/*.{js,ts,jsx,tsx}";
+@source "./inventory/**/*.{js,ts,jsx,tsx}";
 @source "./App.jsx";
 @source "./main.jsx";
 
