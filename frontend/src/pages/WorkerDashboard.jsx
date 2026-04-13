@@ -109,7 +109,7 @@ const WorkerDashboard = () => {
       {/* Top Navbar */}
       <nav className="bg-white border-b border-gray-200 h-[70px] flex items-center justify-between px-6 md:px-8">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 leading-tight">Production Task Dashboard</h1>
+          <h1 className="text-xl font-bold text-gray-900 leading-tight">Production Staff Dashboard</h1>
           <p className="text-sm text-gray-500">Worker Interface</p>
         </div>
         <div className="flex items-center gap-4">

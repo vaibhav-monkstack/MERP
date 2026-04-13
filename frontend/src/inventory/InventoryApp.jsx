@@ -9,7 +9,18 @@ import Orders from "./pages/Orders";
 
 function InventoryApp() {
   const location = useLocation();
+  const role = localStorage.getItem('role');
   const showSidebar = !location.pathname.startsWith("/inventory/orders");
+
+  // Fine-grained RBAC for Inventory sub-modules
+  // 1. Order Manager only sees /inventory/orders
+  if (role === 'Order Manager' && !location.pathname.startsWith('/inventory/orders')) {
+    return <Navigate to="/inventory/orders" replace />;
+  }
+  // 2. Inventory Manager only sees /inventory (excluding /orders)
+  if (role === 'Inventory Manager' && location.pathname.startsWith('/inventory/orders')) {
+    return <Navigate to="/inventory" replace />;
+  }
 
   return (
       <div className="flex">

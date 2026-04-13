@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import API from "../api/api";
+import TopHeader from "../../components/TopHeader";
 
 // 🔥 CHART IMPORTS (PUT AT TOP)
 import { Bar } from "react-chartjs-2";
@@ -58,7 +59,10 @@ export default function Dashboard() {
     <div className="p-6 bg-gray-100 min-h-screen">
 
       {/* HEADER */}
-      <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+      <TopHeader 
+        title="Inventory Management Dashboard" 
+        subtitle="Manage stock levels, materials, and warehouse requests"
+      />
 
       {/* 🔥 LOW STOCK ALERT */}
       {lowStock.length > 0 && (

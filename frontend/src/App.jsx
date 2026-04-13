@@ -15,6 +15,7 @@ import QualityCheck from './pages/QualityCheck';         // Quality check inspec
 import Rework from './pages/Rework';                     // Rework order submission page
 import EditJob from './pages/EditJob';                   // Form to edit an existing job
 import ManageTeams from './pages/ManageTeams';           // Team and worker management page
+import ProtectedRoute from './components/ProtectedRoute'; // RBAC protection component
 
 // --- INVENTORY APP ---
 import InventoryApp from './inventory/InventoryApp';
@@ -37,27 +38,67 @@ function App() {
           {/* Public route — Login page */}
           <Route path="/login" element={<Login />} />
           
-          {/* Job Manager routes */}
-          <Route path="/manager-dashboard" element={<ManagerDashboard />} />  {/* Manager's main dashboard */}
-          <Route path="/manage-teams" element={<ManageTeams />} />            {/* Team management page */}
-          <Route path="/create-job" element={<CreateJob />} />                {/* Create new job form */}
-          <Route path="/jobs/:id/edit" element={<EditJob />} />               {/* Edit existing job */}
+          {/* Job Manager routes — Strictly for Job Managers */}
+          <Route path="/manager-dashboard" element={
+            <ProtectedRoute allowedRoles={['Job Manager']}>
+              <ManagerDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/manage-teams" element={
+            <ProtectedRoute allowedRoles={['Job Manager']}>
+              <ManageTeams />
+            </ProtectedRoute>
+          } />
+          <Route path="/create-job" element={
+            <ProtectedRoute allowedRoles={['Job Manager']}>
+              <CreateJob />
+            </ProtectedRoute>
+          } />
+          <Route path="/jobs/:id/edit" element={
+            <ProtectedRoute allowedRoles={['Job Manager']}>
+              <EditJob />
+            </ProtectedRoute>
+          } />
           
-          {/* Production Staff routes */}
-          <Route path="/worker-dashboard" element={<WorkerDashboard />} />    {/* Worker's personal dashboard */}
-          <Route path="/worker" element={<WorkerTaskPanel />} />              {/* Legacy worker task view */}
+          {/* Production Staff routes — Strictly for workers */}
+          <Route path="/worker-dashboard" element={
+            <ProtectedRoute allowedRoles={['Production Staff']}>
+              <WorkerDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/worker" element={<Navigate to="/worker-dashboard" replace />} />
           
-          {/* Shared routes (accessible by both roles) */}
-          <Route path="/job/:id" element={<JobTracking />} />                 {/* Job detail/tracking page */}
-          <Route path="/job/:id/qc" element={<QualityCheck />} />             {/* Quality check for a job */}
-          <Route path="/job/:id/rework" element={<Rework />} />               {/* Rework order for a job */}
-          <Route path="/job/:id/tasks" element={<WorkerTaskPanel />} />       {/* Task panel for a specific job */}
+          {/* Shared Production Tracking routes — Accessible by Both */}
+          <Route path="/job/:id" element={
+            <ProtectedRoute allowedRoles={['Job Manager', 'Production Staff']}>
+              <JobTracking />
+            </ProtectedRoute>
+          } />
+          <Route path="/job/:id/qc" element={
+            <ProtectedRoute allowedRoles={['Job Manager', 'Production Staff']}>
+              <QualityCheck />
+            </ProtectedRoute>
+          } />
+          <Route path="/job/:id/rework" element={
+            <ProtectedRoute allowedRoles={['Job Manager', 'Production Staff']}>
+              <Rework />
+            </ProtectedRoute>
+          } />
+          <Route path="/job/:id/tasks" element={
+            <ProtectedRoute allowedRoles={['Job Manager', 'Production Staff']}>
+              <WorkerTaskPanel />
+            </ProtectedRoute>
+          } />
           
-          {/* === INVENTORY & ORDER APP PORTALS === */}
-          <Route path="/inventory/*" element={<InventoryApp />} />
+          {/* Inventory & Order App Portals — Role handling is refined inside InventoryApp */}
+          <Route path="/inventory/*" element={
+            <ProtectedRoute allowedRoles={['Order Manager', 'Inventory Manager']}>
+              <InventoryApp />
+            </ProtectedRoute>
+          } />
           <Route path="/orders/*" element={<Navigate to="/inventory/orders" replace />} />
 
-          {/* Default route — redirect to login if no path matches */}
+          {/* Root Redirection Logic */}
           <Route path="/" element={<Navigate to="/login" replace />} />
         </Routes>
       </Router>

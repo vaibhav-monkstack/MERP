@@ -51,11 +51,15 @@ const Login = () => {
       localStorage.setItem('userName', userName);  // User's display name
 
       // Redirect to the appropriate dashboard based on the user's role
-      if (userRole === 'Job Manager') {
-        navigate('/inventory/orders');   // Managers see the Order Management dashboard by default
-      } else {
-        navigate('/worker-dashboard');     // Workers see the production staff dashboard
-      }
+      const redirectionMap = {
+        'Job Manager': '/manager-dashboard',
+        'Order Manager': '/inventory/orders',
+        'Inventory Manager': '/inventory',
+        'Production Staff': '/worker-dashboard'
+      };
+
+      const targetPath = redirectionMap[userRole] || '/login';
+      navigate(targetPath);
     } catch (err) {
       // If login fails, display the error message from the backend (or a default message)
       setError(err.response?.data?.message || 'Invalid credentials. Please try again.');
@@ -66,15 +70,20 @@ const Login = () => {
 
   // Fill in demo credentials for quick testing
   // These match the seeded user accounts in the database
+  // Fill in demo credentials for quick testing
   const setDemoCredentials = (type) => {
-    if (type === 'manager') {
-      setEmail('manager@factory.com');     // Manager demo email
-      setPassword('manager123');            // Manager demo password
-      setRole('Job Manager');               // Set role to Job Manager
-    } else {
-      setEmail('worker@factory.com');       // Worker demo email
-      setPassword('worker123');             // Worker demo password
-      setRole('Production Staff');          // Set role to Production Staff
+    const demos = {
+      'job-manager': { email: 'manager@factory.com', pass: 'manager123', role: 'Job Manager' },
+      'order-manager': { email: 'order@factory.com', pass: 'order123', role: 'Order Manager' },
+      'inventory-manager': { email: 'inventory@factory.com', pass: 'inventory123', role: 'Inventory Manager' },
+      'worker': { email: 'worker@factory.com', pass: 'worker123', role: 'Production Staff' }
+    };
+
+    const demo = demos[type];
+    if (demo) {
+      setEmail(demo.email);
+      setPassword(demo.pass);
+      setRole(demo.role);
     }
   };
 
@@ -145,6 +154,8 @@ const Login = () => {
               style={styles.select}
             >
               <option value="Job Manager">Job Manager</option>
+              <option value="Order Manager">Order Manager</option>
+              <option value="Inventory Manager">Inventory Manager</option>
               <option value="Production Staff">Production Staff</option>
             </select>
           </div>
@@ -159,19 +170,21 @@ const Login = () => {
         <div style={styles.demoSection}>
           <p style={styles.demoLabel}>Demo Credentials:</p>
           <div style={styles.demoButtonsContainer} className="stack-on-mobile">
-            {/* Button to fill manager credentials */}
-            <button
-              onClick={() => setDemoCredentials('manager')}
-              style={styles.demoButton}
-            >
-              Manager Demo
+            {/* Job Manager Demo */}
+            <button onClick={() => setDemoCredentials('job-manager')} style={styles.demoButton}>
+              Job Mgr
             </button>
-            {/* Button to fill worker credentials */}
-            <button
-              onClick={() => setDemoCredentials('worker')}
-              style={styles.demoButton}
-            >
-              Worker Demo
+            {/* Order Manager Demo */}
+            <button onClick={() => setDemoCredentials('order-manager')} style={styles.demoButton}>
+              Order Mgr
+            </button>
+            {/* Inventory Manager Demo */}
+            <button onClick={() => setDemoCredentials('inventory-manager')} style={styles.demoButton}>
+              Inv Mgr
+            </button>
+            {/* Worker Demo */}
+            <button onClick={() => setDemoCredentials('worker')} style={styles.demoButton}>
+              Staff
             </button>
           </div>
         </div>

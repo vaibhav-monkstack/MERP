@@ -16,11 +16,16 @@ const UnifiedNavbar = () => {
     return null;
   }
 
-  const navItems = [
-    { name: 'Order Management Dashboard', path: '/inventory/orders', icon: ShoppingCart },
-    { name: 'Job Management Dashboard', path: '/manager-dashboard', icon: ClipboardList },
-    { name: 'Inventory Management Dashboard', path: '/inventory', icon: Package },
+  const role = localStorage.getItem('role');
+
+  const allNavItems = [
+    { name: 'Order Management Dashboard', path: '/inventory/orders', icon: ShoppingCart, allowedRoles: ['Order Manager'] },
+    { name: 'Job Management Dashboard', path: '/manager-dashboard', icon: ClipboardList, allowedRoles: ['Job Manager'] },
+    { name: 'Inventory Management Dashboard', path: '/inventory', icon: Package, allowedRoles: ['Inventory Manager'] },
   ];
+
+  // Filter items based on the user's role
+  const navItems = allNavItems.filter(item => item.allowedRoles.includes(role));
 
   return (
     <div className="bg-gray-900 text-white shadow-md z-50 sticky top-0 border-b border-gray-700">

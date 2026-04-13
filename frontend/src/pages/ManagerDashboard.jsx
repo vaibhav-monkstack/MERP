@@ -6,7 +6,6 @@ import { useNavigate } from 'react-router-dom';
 import { useJobs } from '../context/JobContext';
 // Import icons from lucide-react for UI elements
 import { 
-  LogOut,        // Logout button icon
   Briefcase,     // Total jobs stat icon
   Clock,         // In-progress stat icon
   CheckCircle,   // Completed stat icon
@@ -17,9 +16,9 @@ import {
   BarChart2,     // Worker tasks action icon
   Edit2,         // Edit job action icon
   Trash2,        // Delete job action icon
-  User,          // User avatar icon
   Users          // Manage teams button icon
 } from 'lucide-react';
+import TopHeader from '../components/TopHeader';
 
 // ============================================================
 // MANAGER DASHBOARD — Main control panel for Job Managers
@@ -161,29 +160,16 @@ const ManagerDashboard = () => {
   return (
     <div style={styles.pageBackground} className="container-custom">
       {/* === HEADER — Title, user info, and navigation buttons === */}
-      <header className="header-responsive">
-        <div>
-          <h1 style={styles.headerTitle}>Job Manager Dashboard</h1>
-          <p style={styles.headerSubtitle}>Manage and track all manufacturing jobs</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
-          {/* User badge showing the logged-in manager's avatar and name */}
-          <div style={styles.userBadge}>
-            <div style={styles.avatar}><User size={18} color="#2563eb" /></div>
-            <span style={styles.userName}>John Manager</span>
-          </div>
-          {/* Navigate to Manage Teams page */}
+      <TopHeader 
+        title="Job Management Dashboard" 
+        subtitle="Manage and track all manufacturing jobs"
+        extraActions={
           <button onClick={() => navigate('/manage-teams')} style={styles.manageTeamsBtn}>
             <Users size={18} />
             <span>Manage Teams</span>
           </button>
-          {/* Logout button */}
-          <button onClick={handleLogout} style={styles.logoutBtn}>
-            <LogOut size={18} />
-            <span>Logout</span>
-          </button>
-        </div>
-      </header>
+        }
+      />
 
       {/* === STATS ROW — Four cards showing job counts === */}
       <div className="stat-grid mb-8">
@@ -354,12 +340,6 @@ const ManagerDashboard = () => {
 // ============================================================
 const styles = {
   pageBackground: { minHeight: '100vh', backgroundColor: '#f3f4f6', fontFamily: "'Inter', sans-serif" },
-  headerTitle: { fontSize: '28px', fontWeight: '800', color: '#111827', margin: 0 },
-  headerSubtitle: { fontSize: '14px', color: '#6b7280', marginTop: '4px' },
-  userBadge: { display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: 'white', padding: '6px 16px 6px 6px', borderRadius: '50px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' },
-  avatar: { width: '32px', height: '32px', backgroundColor: '#eff6ff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  userName: { fontSize: '14px', fontWeight: '600', color: '#374151' },
-  logoutBtn: { display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'white', border: '1px solid #e5e7eb', padding: '8px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '600', color: '#4b5563', cursor: 'pointer' },
   manageTeamsBtn: { display: 'flex', alignItems: 'center', gap: '8px', background: 'linear-gradient(135deg, #6366f1, #4f46e5)', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s' },
   statCard: { backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' },
   statCardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' },
