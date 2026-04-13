@@ -34,8 +34,9 @@ export default function Suppliers() {
       const res = await API.get("/suppliers");
       setData(res.data);
 
-      const orderRes = await API.get("/orders");
-      setOrders(orderRes.data.slice(0, 3)); // latest 3
+      const orderRes = await API.get("/inv-orders");
+      const ordersArray = orderRes.data;
+      setOrders(Array.isArray(ordersArray) ? ordersArray.slice(0, 3) : []);
     } catch (err) {
       console.error(err);
     }

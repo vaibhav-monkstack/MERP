@@ -29,8 +29,11 @@ export default function Dashboard() {
       const mat = await API.get("/materials");
       const req = await API.get("/requests");
 
+      // materials API returns a plain array
       setMaterials(Array.isArray(mat.data) ? mat.data : []);
-      setRequests(Array.isArray(req.data) ? req.data : []);
+      // requests API returns { success, data: [...] }
+      const reqData = req.data.data || req.data;
+      setRequests(Array.isArray(reqData) ? reqData : []);
     } catch (error) {
       console.error("Dashboard API Error:", error);
       setMaterials([]);

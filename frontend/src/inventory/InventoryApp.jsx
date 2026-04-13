@@ -4,23 +4,12 @@ import Dashboard from "./pages/Dashboard";
 import Materials from "./pages/Materials";
 import Requests from "./pages/Requests";
 import Suppliers from "./pages/Suppliers";
-import NewOrder from "./pages/NewOrder"; // ✅ ADD THIS
+import NewOrder from "./pages/NewOrder";
 import Orders from "./pages/Orders";
 
 function InventoryApp() {
   const location = useLocation();
-  const role = localStorage.getItem('role');
-  const showSidebar = !location.pathname.startsWith("/inventory/orders");
-
-  // Fine-grained RBAC for Inventory sub-modules
-  // 1. Order Manager only sees /inventory/orders
-  if (role === 'Order Manager' && !location.pathname.startsWith('/inventory/orders')) {
-    return <Navigate to="/inventory/orders" replace />;
-  }
-  // 2. Inventory Manager only sees /inventory (excluding /orders)
-  if (role === 'Inventory Manager' && location.pathname.startsWith('/inventory/orders')) {
-    return <Navigate to="/inventory" replace />;
-  }
+  const showSidebar = !location.pathname.startsWith("/inventory/orders") || location.pathname === "/inventory/orders/new";
 
   return (
       <div className="flex">
@@ -32,10 +21,9 @@ function InventoryApp() {
             <Route path="/materials" element={<Materials />} />
             <Route path="/requests" element={<Requests />} />
             <Route path="/suppliers" element={<Suppliers />} />
-            <Route path="/orders" element={<Orders />} />
-
-            {/* ✅ ADD THIS ROUTE */}
+            {/* /orders/new MUST come before /orders to avoid premature match */}
             <Route path="/orders/new" element={<NewOrder />} />
+            <Route path="/orders" element={<Orders />} />
 
           </Routes>
         </div>

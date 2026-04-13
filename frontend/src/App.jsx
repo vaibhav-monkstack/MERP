@@ -90,13 +90,12 @@ function App() {
             </ProtectedRoute>
           } />
           
-          {/* Inventory & Order App Portals — Role handling is refined inside InventoryApp */}
+          {/* Inventory App Portal — Inventory Manager only */}
           <Route path="/inventory/*" element={
-            <ProtectedRoute allowedRoles={['Order Manager', 'Inventory Manager']}>
+            <ProtectedRoute allowedRoles={['Inventory Manager']}>
               <InventoryApp />
             </ProtectedRoute>
           } />
-          <Route path="/orders/*" element={<Navigate to="/inventory/orders" replace />} />
 
           {/* Root Redirection Logic */}
           <Route path="/" element={<Navigate to="/login" replace />} />

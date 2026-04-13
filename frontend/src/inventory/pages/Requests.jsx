@@ -16,7 +16,8 @@ export default function Requests() {
   const fetchData = async () => {
     try {
       const res = await API.get("/requests");
-      setData(Array.isArray(res.data) ? res.data : []);
+      const requestsData = res.data.data || res.data;
+      setData(Array.isArray(requestsData) ? requestsData : []);
     } catch (err) {
       console.error("Requests error:", err);
       setData([]);
