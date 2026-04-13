@@ -16,16 +16,22 @@
 
 /* Custom utility classes used in the dashboard */
 .container-custom {
-  @apply container mx-auto px-4 md:px-8;
+  @apply container mx-auto px-4 sm:px-6 lg:px-8;
 }
 
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(1, 1fr);
-  gap: 1.25rem;
+  gap: 1rem;
 }
 
 @media (min-width: 640px) {
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
   .stat-grid {
     grid-template-columns: repeat(4, 1fr);
   }

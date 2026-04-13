@@ -191,10 +191,10 @@ const ManagerDashboard = () => {
         {/* MAIN CONTENT CARD */}
         <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
           <div className="p-8 border-b border-slate-50 flex flex-col gap-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
               <h2 className="text-xl font-black text-slate-900 tracking-tight">Active Job List</h2>
               <button 
-                className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all hover:scale-[1.02] active:scale-[0.98]"
                 onClick={() => navigate('/create-job')}
               >
                 <Plus size={18} strokeWidth={3} />
@@ -204,19 +204,19 @@ const ManagerDashboard = () => {
 
             {/* FILTERS */}
             <div className="controls-responsive">
-              <div className="relative flex-1">
-                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+              <div className="relative flex-1 group">
+                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
                 <input 
                   type="text" 
                   placeholder="Search products, teams, or IDs..." 
-                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all font-medium"
+                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border-2 border-transparent rounded-2xl text-sm focus:border-indigo-500 focus:bg-white transition-all font-medium outline-none"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                 <select 
-                  className="bg-slate-50 border-none rounded-2xl text-sm py-3 px-4 font-bold text-slate-600 focus:ring-2 focus:ring-indigo-500"
+                  className="bg-slate-50 border-2 border-transparent rounded-2xl text-sm py-3 px-4 font-bold text-slate-600 focus:border-indigo-500 focus:bg-white outline-none"
                   value={statusFilter} 
                   onChange={(e) => setStatusFilter(e.target.value)}
                 >
@@ -229,7 +229,7 @@ const ManagerDashboard = () => {
                   <option>Completed</option>
                 </select>
                 <select 
-                  className="bg-slate-50 border-none rounded-2xl text-sm py-3 px-4 font-bold text-slate-600 focus:ring-2 focus:ring-indigo-500"
+                  className="bg-slate-50 border-2 border-transparent rounded-2xl text-sm py-3 px-4 font-bold text-slate-600 focus:border-indigo-500 focus:bg-white outline-none"
                   value={priorityFilter} 
                   onChange={(e) => setPriorityFilter(e.target.value)}
                 >
@@ -281,7 +281,9 @@ const ManagerDashboard = () => {
                     </div>
                   </div>
                 </td>
-                <td className="px-6 py-5 text-sm font-bold text-slate-500">{job.deadline}</td>
+                <td className="px-6 py-5 text-sm font-bold text-slate-500 whitespace-nowrap">
+                  {job.deadline ? new Date(job.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+                </td>
                 <td className="px-6 py-5" onClick={(e) => e.stopPropagation()}>
                   <div className="flex justify-end gap-2">
                     <button 

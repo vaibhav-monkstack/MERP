@@ -23,34 +23,41 @@ const TopHeader = ({ title, subtitle, extraActions }) => {
   };
 
   return (
-    <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12 w-full">
+    <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-10 w-full">
       <div className="flex flex-col gap-1">
-        <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">{title}</h1>
-        {subtitle && <p className="text-slate-400 font-medium text-sm">{subtitle}</p>}
+        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">{title}</h1>
+        {subtitle && <p className="text-slate-400 font-medium text-xs sm:text-sm">{subtitle}</p>}
       </div>
       
-      <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
-        {extraActions}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full lg:w-auto">
+        {extraActions && (
+          <div className="flex items-center gap-3">
+            {extraActions}
+          </div>
+        )}
         
-        {/* User badge */}
-        <div className="flex items-center gap-3 bg-white border border-slate-100 pl-2 pr-5 py-2 rounded-2xl shadow-sm">
-          <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
-            <User size={20} strokeWidth={2.5} />
+        <div className="flex items-center justify-between sm:justify-start gap-4 w-full sm:w-auto">
+          {/* User badge */}
+          <div className="flex flex-1 sm:flex-none items-center gap-3 bg-white border border-slate-100 pl-2 pr-5 py-2 rounded-2xl shadow-sm">
+            <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 shrink-0">
+              <User size={20} strokeWidth={2.5} />
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none truncate">Logged in as</span>
+              <span className="text-sm font-extrabold text-slate-700 leading-tight truncate">{userName}</span>
+            </div>
           </div>
-          <div className="flex flex-col">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Logged in as</span>
-            <span className="text-sm font-extrabold text-slate-700 leading-tight">{userName}</span>
-          </div>
-        </div>
 
-        {/* Logout button */}
-        <button 
-          onClick={handleLogout} 
-          className="flex items-center gap-2 bg-slate-900 text-white px-5 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-slate-200 hover:bg-slate-800 transition-all hover:scale-[1.02] active:scale-[0.98]"
-        >
-          <LogOut size={18} />
-          <span>Logout</span>
-        </button>
+          {/* Logout button */}
+          <button 
+            onClick={handleLogout} 
+            className="flex items-center justify-center gap-2 bg-slate-900 text-white px-5 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-slate-200 hover:bg-slate-800 transition-all hover:scale-[1.02] active:scale-[0.98] shrink-0 sm:shrink"
+          >
+            <LogOut size={18} />
+            <span className="hidden sm:inline">Logout</span>
+            <span className="sm:hidden">Exit</span>
+          </button>
+        </div>
       </div>
     </header>
   );

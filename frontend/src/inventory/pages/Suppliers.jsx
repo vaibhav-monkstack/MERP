@@ -148,12 +148,12 @@ export default function Suppliers() {
           <div className="lg:col-span-2 flex flex-col gap-6">
             {/* SEARCH & ADD */}
             <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-              <div className="relative flex-1">
-                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+              <div className="relative flex-1 group">
+                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
                 <input
                   type="text"
                   placeholder="Search suppliers..."
-                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all font-medium"
+                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border-2 border-transparent rounded-2xl text-sm focus:border-indigo-500 focus:bg-white transition-all font-medium outline-none"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
@@ -174,45 +174,46 @@ export default function Suppliers() {
                   key={s.id}
                   className="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-all group"
                 >
-                  <div className="flex justify-between items-start">
+                  <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                     {/* LEFT INFO */}
-                    <div className="flex flex-col gap-2">
-                      <h3 className="text-lg font-black text-slate-900 tracking-tight">{s.name}</h3>
+                    <div className="flex flex-col gap-2 min-w-0">
+                      <h3 className="text-lg font-black text-slate-900 tracking-tight truncate">{s.name}</h3>
                       <div className="flex flex-col gap-1.5">
-                        <div className="flex items-center gap-2 text-sm text-slate-500">
-                          <Mail size={14} className="text-slate-400" /> 
-                          <span className="font-medium">{s.contact_email}</span>
+                        <div className="flex items-center gap-2 text-sm text-slate-500 overflow-hidden">
+                          <Mail size={14} className="text-slate-400 shrink-0" /> 
+                          <span className="font-medium truncate">{s.contact_email}</span>
                         </div>
                         <div className="flex items-center gap-2 text-sm text-slate-500">
-                          <Phone size={14} className="text-slate-400" /> 
-                          <span className="font-medium">{s.contact_phone}</span>
+                          <Phone size={14} className="text-slate-400 shrink-0" /> 
+                          <span className="font-medium truncate">{s.contact_phone}</span>
                         </div>
                         <div className="flex items-center gap-2 text-sm text-slate-500">
-                          <MapPin size={14} className="text-slate-400" /> 
-                          <span className="font-medium">{s.location}</span>
+                          <MapPin size={14} className="text-slate-400 shrink-0" /> 
+                          <span className="font-medium truncate">{s.location}</span>
                         </div>
                       </div>
                     </div>
 
                     {/* RIGHT */}
-                    <div className="flex flex-col items-end gap-3">
-                      <StatusBadge status={s.status === "On Time" ? "Active" : "Critical"} />
-                      
-                      <div className="flex items-center gap-1 text-sm text-slate-500">
-                        <Star size={14} className="text-amber-400 fill-amber-400" />
-                        <span className="font-bold">{s.rating}</span>
+                    <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-3 w-full sm:w-auto">
+                      <div className="flex flex-col items-end gap-1.5">
+                        <StatusBadge status={s.status === "On Time" ? "Active" : "Critical"} />
+                        <div className="flex items-center gap-1 text-sm text-slate-500">
+                          <Star size={14} className="text-amber-400 fill-amber-400" />
+                          <span className="font-bold">{s.rating}</span>
+                        </div>
                       </div>
 
-                      <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                         <button 
                           onClick={() => handleEdit(s)}
-                          className="p-2 hover:bg-white hover:shadow-md rounded-xl transition-all text-slate-400 hover:text-slate-900 border border-transparent hover:border-slate-100"
+                          className="p-2 bg-slate-50 sm:bg-transparent hover:bg-white hover:shadow-md rounded-xl transition-all text-slate-400 hover:text-slate-900 border border-slate-100 sm:border-transparent hover:border-slate-100"
                         >
                           <Edit2 size={16} />
                         </button>
                         <button 
                           onClick={() => handleDelete(s.id)}
-                          className="p-2 hover:bg-white hover:shadow-md rounded-xl transition-all text-slate-400 hover:text-rose-600 border border-transparent hover:border-slate-100"
+                          className="p-2 bg-slate-50 sm:bg-transparent hover:bg-white hover:shadow-md rounded-xl transition-all text-slate-400 hover:text-rose-600 border border-slate-100 sm:border-transparent hover:border-slate-100"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -298,10 +299,10 @@ export default function Suppliers() {
 
       {/* MODAL */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
-            <div className="px-8 py-6 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
-              <h2 className="text-xl font-bold text-slate-900">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-end sm:items-center z-50 p-0 sm:p-4">
+          <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in slide-in-from-bottom sm:slide-in-from-bottom-8 duration-300">
+            <div className="px-6 sm:px-8 py-5 sm:py-6 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
+              <h2 className="text-lg sm:text-xl font-bold text-slate-900">
                 {editId ? "Edit Supplier" : "Add Supplier"}
               </h2>
               <button onClick={() => setShowModal(false)} className="p-2 hover:bg-slate-200 rounded-xl transition-colors text-slate-400 hover:text-slate-900">
@@ -309,7 +310,7 @@ export default function Suppliers() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="px-8 py-8 flex flex-col gap-5">
+            <form onSubmit={handleSubmit} className="px-6 sm:px-8 py-6 sm:py-8 flex flex-col gap-5">
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Name</label>
                 <input placeholder="Supplier name" className="bg-slate-50 border-none rounded-2xl py-3 px-4 text-sm font-medium focus:ring-2 focus:ring-indigo-500 transition-all"

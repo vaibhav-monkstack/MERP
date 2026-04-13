@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Package, ClipboardList, ShoppingCart, LayoutDashboard, Box, MessageSquare, Truck } from 'lucide-react';
+import { Package, ClipboardList, ShoppingCart, LayoutDashboard, Box, MessageSquare, Truck, Menu, X } from 'lucide-react';
 
 const UnifiedNavbar = () => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const role = localStorage.getItem('role');
 
@@ -31,8 +32,9 @@ const UnifiedNavbar = () => {
   ];
 
   const isInventoryActive = location.pathname.startsWith('/inventory');
-
   const filteredModules = mainModules.filter(m => m.allowedRoles.includes(role));
+
+  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
   return (
     <div className="z-50 sticky top-0 flex flex-col w-full">
@@ -46,7 +48,8 @@ const UnifiedNavbar = () => {
             <span>Manufacturing <span className="text-indigo-400">Hub</span></span>
           </div>
           
-          <div className="flex items-center gap-2">
+          {/* Desktop Links */}
+          <div className="hidden lg:flex items-center gap-2">
             {filteredModules.map((item) => {
               const isActive = item.path === '/inventory' 
                 ? (location.pathname === '/inventory' || (location.pathname.startsWith('/inventory') && !location.pathname.startsWith('/inventory/orders')))
@@ -69,10 +72,47 @@ const UnifiedNavbar = () => {
             })}
           </div>
           
-          <div className="hidden md:block text-[10px] text-slate-500 font-black tracking-widest uppercase">
-            v3.0 Master Theme
+          <div className="flex items-center gap-4">
+            <div className="hidden sm:block text-[10px] text-slate-500 font-black tracking-widest uppercase">
+              v3.0 Master Theme
+            </div>
+            
+            {/* Mobile Menu Toggle */}
+            <button 
+              onClick={toggleMobileMenu}
+              className="lg:hidden p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-all"
+            >
+              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile menu dropdown */}
+        {isMobileMenuOpen && (
+          <div className="lg:hidden bg-slate-900 border-t border-slate-800 px-6 py-4 flex flex-col gap-2">
+            {filteredModules.map((item) => {
+              const isActive = item.path === '/inventory' 
+                ? (location.pathname === '/inventory' || (location.pathname.startsWith('/inventory') && !location.pathname.startsWith('/inventory/orders')))
+                : location.pathname.startsWith(item.path);
+
+              return (
+                <Link
+                  key={item.name}
+                  to={item.path}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-4 rounded-xl text-base font-bold transition-all ${
+                    isActive
+                      ? 'bg-indigo-600 text-white shadow-lg'
+                      : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                  }`}
+                >
+                  <item.icon size={20} />
+                  {item.name}
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </nav>
 
       {/* Secondary Sub-Navbar (Only for Inventory) */}

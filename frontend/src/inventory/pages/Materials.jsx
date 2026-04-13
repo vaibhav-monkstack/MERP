@@ -84,11 +84,11 @@ export default function Materials() {
         {/* MAIN CONTENT CARD */}
         <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
           <div className="p-8 border-b border-slate-50 flex flex-col gap-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
               <h2 className="text-xl font-black text-slate-900 tracking-tight">All Materials</h2>
               <button
                 onClick={() => { setEditId(null); setForm({ name: "", type: "", quantity: "", supplier: "" }); setShowModal(true); }}
-                className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
                 <Plus size={18} strokeWidth={3} />
                 <span>Add Material</span>
@@ -96,19 +96,19 @@ export default function Materials() {
             </div>
 
             {/* FILTERS */}
-            <div className="controls-responsive">
-              <div className="relative flex-1">
-                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1 group">
+                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
                 <input
                   type="text"
                   placeholder="Search materials..."
-                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all font-medium"
+                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border-2 border-transparent rounded-2xl text-sm focus:border-indigo-500 focus:bg-white transition-all font-medium outline-none"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
               <select
-                className="bg-slate-50 border-none rounded-2xl text-sm py-3 px-4 font-bold text-slate-600 focus:ring-2 focus:ring-indigo-500"
+                className="bg-slate-50 border-2 border-transparent rounded-2xl text-sm py-3 px-4 font-bold text-slate-600 focus:border-indigo-500 focus:bg-white outline-none"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
@@ -155,10 +155,10 @@ export default function Materials() {
 
       {/* MODAL FORM */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in">
-            <div className="px-8 py-6 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
-              <h2 className="text-xl font-bold text-slate-900">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-end sm:items-center z-50 p-0 sm:p-4">
+          <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in slide-in-from-bottom sm:slide-in-from-bottom-8 duration-300">
+            <div className="px-6 sm:px-8 py-5 sm:py-6 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
+              <h2 className="text-lg sm:text-xl font-bold text-slate-900">
                 {editId ? "Edit Material" : "Add Material"}
               </h2>
               <button onClick={() => setShowModal(false)} className="p-2 hover:bg-slate-200 rounded-xl transition-colors text-slate-400 hover:text-slate-900">
@@ -166,7 +166,7 @@ export default function Materials() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="px-8 py-8 flex flex-col gap-5">
+            <form onSubmit={handleSubmit} className="px-6 sm:px-8 py-6 sm:py-8 flex flex-col gap-5">
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Name</label>
                 <input
