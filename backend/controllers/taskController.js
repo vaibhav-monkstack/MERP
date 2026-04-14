@@ -1,5 +1,5 @@
 // Import the database connection pool for running queries
-const pool = require('../config/dbPromise');
+const pool = require('../config/db');
 
 // ============================================================
 // TASK CONTROLLER — Handles worker task operations

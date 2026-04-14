@@ -1,6 +1,6 @@
 const express = require('express');
 const router  = express.Router();
-const pool    = require('../config/dbPromise');
+const pool    = require('../config/db');
 
 // GET all orders with stats
 router.get('/', async (req, res) => {

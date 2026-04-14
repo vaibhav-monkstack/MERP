@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 // Import URL parameter and navigation hooks
 import { useParams, useNavigate } from 'react-router-dom';
 // Import the shared job context for job data
-import { useJobs } from '../context/JobContext';
+import { useJobs } from '../../context/JobContext';
 // Import icons used in the tracking page UI
 import { 
   ArrowLeft,       // Back button
@@ -94,7 +94,7 @@ const JobTracking = () => {
       {/* HEADER SECTION */}
       <header style={styles.header} className="stack-on-mobile">
         <div style={styles.headerLeft}>
-          <button onClick={() => navigate('/manager-dashboard')} style={styles.backBtn}>
+          <button onClick={() => navigate('/jobs')} style={styles.backBtn}>
             <ArrowLeft size={18} />
             <span>Back to Dashboard</span>
           </button>
@@ -122,13 +122,13 @@ const JobTracking = () => {
         </div>
         <div style={styles.headerRight}>
           <button 
-            onClick={() => navigate(`/job/${job.id}/tasks`)} 
+            onClick={() => navigate(`/jobs/${job.id}/tasks`)} 
             style={styles.outlineBtn}
           >
             Worker Tasks
           </button>
           <button 
-            onClick={() => isQCActive && navigate(`/job/${job.id}/qc`)} 
+            onClick={() => isQCActive && navigate(`/jobs/${job.id}/qc`)} 
             disabled={!isQCActive}
             style={{
               ...styles.solidGreenBtn,

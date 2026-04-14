@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 // Import URL param extraction and navigation hooks
 import { useParams, useNavigate } from 'react-router-dom';
 // Import the shared job context for job data and QC record operations
-import { useJobs } from '../context/JobContext';
+import { useJobs } from '../../context/JobContext';
 // Import various icons used throughout the QC page UI
 import { 
   ArrowLeft,        // Back button icon
@@ -104,7 +104,7 @@ const QualityCheck = () => {
       // Update the job status to "Rework" and reduce progress by 20%
       // Math.max ensures progress doesn't drop below 10%
       updateJob(job.id, { status: 'Rework', progress: Math.max(job.progress - 20, 10) });
-      navigate('/manager-dashboard'); // Go back to the dashboard
+      navigate('/jobs'); // Go back to the dashboard
     } else {
       // === APPROVAL PATH — all checklist items passed ===
       // Save a QC Record with "Pass" result to the database
@@ -120,7 +120,7 @@ const QualityCheck = () => {
 
       // Update the job status to "Completed" with 100% progress
       updateJob(job.id, { status: 'Completed', progress: 100 });
-      navigate('/manager-dashboard'); // Go back to the dashboard
+      navigate('/jobs'); // Go back to the dashboard
     }
   };
 

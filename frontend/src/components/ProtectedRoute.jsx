@@ -21,10 +21,10 @@ const ProtectedRoute = ({ allowedRoles, children }) => {
 
   // 2. Define the "Home" dashboard for each role (fallback redirection)
   const roleHomeMap = {
-    [ROLES.JOB_MANAGER]: '/manager-dashboard',
+    [ROLES.JOB_MANAGER]: '/jobs',
     [ROLES.ORDER_MANAGER]: '/orders',
     [ROLES.INVENTORY_MANAGER]: '/inventory',
-    [ROLES.PRODUCTION_STAFF]: '/worker-dashboard'
+    [ROLES.PRODUCTION_STAFF]: '/jobs/worker'
   };
 
   // 3. If authenticated but role is not allowed, redirect to their respective home dashboard

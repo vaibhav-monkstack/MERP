@@ -6,7 +6,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 // Import icons from lucide-react for visual elements
 import { Factory, Eye, EyeOff } from 'lucide-react';
-import { ROLES } from '../utils/constants';
+import { ROLES } from '../../utils/constants';
 
 // ============================================================
 // LOGIN PAGE — Authentication screen for all platform roles
@@ -49,10 +49,10 @@ const Login = () => {
 
       // Redirect map based on verified server role
       const redirectionMap = {
-        [ROLES.JOB_MANAGER]: '/manager-dashboard',
+        [ROLES.JOB_MANAGER]: '/jobs',
         [ROLES.ORDER_MANAGER]: '/orders',
         [ROLES.INVENTORY_MANAGER]: '/inventory',
-        [ROLES.PRODUCTION_STAFF]: '/worker-dashboard'
+        [ROLES.PRODUCTION_STAFF]: '/jobs/worker'
       };
 
       const targetPath = redirectionMap[userRole] || '/login';

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, DollarSign, TrendingUp, Search, Plus, UserPlus, Eye, Trash2 } from 'lucide-react';
+import { Users, DollarSign, TrendingUp, Search, Plus, Eye, Trash2 } from 'lucide-react';
 import API from '../../api/api';
 import TopHeader from '../../components/TopHeader';
 import StatCard from '../../components/common/StatCard';
@@ -88,9 +88,6 @@ export default function Customers() {
               onChange={e => setSearch(e.target.value)}
             />
           </div>
-          <button className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">
-            <UserPlus size={18} /> Add Customer
-          </button>
         </div>
 
         <DataTable 

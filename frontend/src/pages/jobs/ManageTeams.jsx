@@ -223,7 +223,7 @@ const ManageTeams = () => {
       {/* Back Link */}
       <div style={{ marginBottom: '24px' }}>
         <button 
-          onClick={() => navigate('/manager-dashboard')}
+          onClick={() => navigate('/jobs')}
           style={styles.backBtn}
         >
           <ChevronLeft size={18} />

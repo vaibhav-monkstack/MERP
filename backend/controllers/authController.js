@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 // Import bcryptjs for password hashing and verification
 const bcrypt = require('bcryptjs');
 // Import the database connection pool for running queries
-const pool = require('../config/dbPromise');
+const pool = require('../config/db');
 
 // LOGIN HANDLER — Authenticates a user and returns a JWT token
 // Called when POST /api/auth/login is hit

@@ -1,5 +1,5 @@
 // Import the database connection pool for running queries
-const pool = require('../config/dbPromise');
+const pool = require('../config/db');
 
 // ============================================================
 // QC CONTROLLER — Handles Quality Check record operations

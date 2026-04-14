@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 // Import navigation hook for page redirects
 import { useNavigate } from 'react-router-dom';
 // Import the shared job context to access job data and operations
-import { useJobs } from '../context/JobContext';
+import { useJobs } from '../../context/JobContext';
 // Import icons from lucide-react for UI elements
 import { 
   Briefcase,     // Total jobs stat icon
@@ -16,14 +16,13 @@ import {
   BarChart2,     // Worker tasks action icon
   Edit2,         // Edit job action icon
   Trash2,        // Delete job action icon
-  Users          // Manage teams button icon
 } from 'lucide-react';
 
 // Shared Components
-import TopHeader from '../components/TopHeader';
-import StatCard from '../components/common/StatCard';
-import DataTable from '../components/common/DataTable';
-import StatusBadge from '../components/common/StatusBadge';
+import TopHeader from '../../components/TopHeader';
+import StatCard from '../../components/common/StatCard';
+import DataTable from '../../components/common/DataTable';
+import StatusBadge from '../../components/common/StatusBadge';
 
 // Import toast for notifications
 import toast from 'react-hot-toast';
@@ -140,15 +139,6 @@ const ManagerDashboard = () => {
         <TopHeader 
           title="Job Management" 
           subtitle="Real-time monitoring and production control"
-          extraActions={
-            <button 
-              onClick={() => navigate('/manage-teams')} 
-              className="flex items-center gap-2 bg-white text-slate-700 border border-slate-200 px-4 py-2 rounded-xl text-sm font-bold shadow-sm hover:bg-slate-50 transition-all"
-            >
-              <Users size={18} className="text-indigo-600" />
-              <span>Manage Teams</span>
-            </button>
-          }
         />
 
         {/* STATS ROW */}
@@ -195,7 +185,7 @@ const ManagerDashboard = () => {
               <h2 className="text-xl font-black text-slate-900 tracking-tight">Active Job List</h2>
               <button 
                 className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                onClick={() => navigate('/create-job')}
+                onClick={() => navigate('/jobs/new')}
               >
                 <Plus size={18} strokeWidth={3} />
                 <span>Create New Job</span>
@@ -252,7 +242,7 @@ const ManagerDashboard = () => {
               <tr 
                 key={job.id} 
                 className="hover:bg-slate-50/80 transition-colors cursor-pointer group border-b border-slate-50 last:border-none"
-                onClick={() => navigate(`/job/${job.id}`)}
+                onClick={() => navigate(`/jobs/${job.id}`)}
               >
                 <td className="px-6 py-5 text-xs font-black text-slate-400 font-mono">{job.id}</td>
                 <td className="px-6 py-5 text-sm font-bold text-slate-900">{job.product}</td>
@@ -287,13 +277,13 @@ const ManagerDashboard = () => {
                 <td className="px-6 py-5" onClick={(e) => e.stopPropagation()}>
                   <div className="flex justify-end gap-2">
                     <button 
-                      onClick={() => navigate(`/job/${job.id}`)}
+                      onClick={() => navigate(`/jobs/${job.id}`)}
                       className="p-2 hover:bg-white hover:shadow-md rounded-xl transition-all text-slate-400 hover:text-indigo-600 border border-transparent hover:border-slate-100"
                     >
                       <Eye size={16} />
                     </button>
                     <button 
-                      onClick={() => navigate(`/job/${job.id}/tasks`)}
+                      onClick={() => navigate(`/jobs/${job.id}/tasks`)}
                       className="p-2 hover:bg-white hover:shadow-md rounded-xl transition-all text-slate-400 hover:text-blue-600 border border-transparent hover:border-slate-100"
                     >
                       <BarChart2 size={16} />

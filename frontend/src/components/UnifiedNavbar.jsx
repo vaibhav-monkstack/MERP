@@ -31,7 +31,7 @@ const UnifiedNavbar = () => {
   // Main high-level modules
   const mainModules = [
     { name: 'Orders', path: '/orders', icon: ShoppingCart, allowedRoles: [ROLES.ORDER_MANAGER] },
-    { name: 'Jobs', path: '/manager-dashboard', icon: ClipboardList, allowedRoles: [ROLES.JOB_MANAGER] },
+    { name: 'Jobs', path: '/jobs', icon: ClipboardList, allowedRoles: [ROLES.JOB_MANAGER] },
     { name: 'Inventory', path: '/inventory', icon: Package, allowedRoles: [ROLES.INVENTORY_MANAGER] },
   ];
 
@@ -50,10 +50,15 @@ const UnifiedNavbar = () => {
     { name: 'Customers', path: '/orders/customers', icon: Users },
   ];
 
-
+  // Sub-links for Job Management (Manager Only)
+  const jobsSubLinks = [
+    { name: 'Dashboard', path: '/jobs', icon: LayoutDashboard },
+    { name: 'Manage Teams', path: '/jobs/teams', icon: Users },
+  ];
 
   const isInventoryActive = location.pathname.startsWith('/inventory');
   const isOrdersActive = location.pathname.startsWith('/orders');
+  const isJobsActive = location.pathname.startsWith('/jobs') && !location.pathname.startsWith('/jobs/worker');
 
   const filteredModules = mainModules.filter(m => m.allowedRoles.includes(role));
 
@@ -135,6 +140,31 @@ const UnifiedNavbar = () => {
           </div>
         )}
       </nav>
+
+      {/* Secondary Sub-Navbar (Only for Jobs) */}
+      {isJobsActive && role === ROLES.JOB_MANAGER && (
+        <div className="bg-white border-b border-gray-100 shadow-sm overflow-x-auto no-scrollbar">
+          <div className="max-w-screen-2xl mx-auto px-6 flex items-center h-12 gap-8">
+            {jobsSubLinks.map((sub) => {
+              const isActive = location.pathname === sub.path;
+              return (
+                <Link
+                  key={sub.name}
+                  to={sub.path}
+                  className={`flex items-center gap-2 text-xs font-bold transition-colors whitespace-nowrap h-full border-b-2 px-1 ${
+                    isActive
+                      ? 'border-indigo-600 text-indigo-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-900'
+                  }`}
+                >
+                  <sub.icon size={14} />
+                  {sub.name}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Secondary Sub-Navbar (Only for Inventory) */}
       {isInventoryActive && (

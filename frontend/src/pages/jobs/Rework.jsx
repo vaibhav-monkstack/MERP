@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 // Import URL param extraction (useParams) and navigation (useNavigate) hooks
 import { useParams, useNavigate } from 'react-router-dom';
 // Import the shared job context to read job data and update job status
-import { useJobs } from '../context/JobContext';
+import { useJobs } from '../../context/JobContext';
 // Import icons for the page header and rework icon
 import { RefreshCw, ArrowLeft } from 'lucide-react';
 
@@ -29,7 +29,7 @@ const Rework = () => {
     // Update the job: set status to "Rework" and reduce progress by 20%
     // Math.max ensures progress doesn't go below 10%
     updateJob(id, { status: 'Rework', progress: Math.max(job.progress - 20, 10) });
-    navigate(`/job/${id}`); // Navigate back to the job tracking page
+    navigate(`/jobs/${id}`); // Navigate back to the job tracking page
   };
 
   // === RENDER — Rework order form ===

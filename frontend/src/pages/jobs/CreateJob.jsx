@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 // Import useNavigate for redirecting after job creation
 import { useNavigate } from 'react-router-dom';
 // Import the useJobs hook to access the addJob function from JobContext
-import { useJobs } from '../context/JobContext';
+import { useJobs } from '../../context/JobContext';
 // Import the back arrow icon for the navigation button
 import { ArrowLeft } from 'lucide-react';
 
@@ -85,7 +85,7 @@ const CreateJob = () => {
     setIsSubmitting(true);
     try {
       await addJob(formData);             // Call the addJob function from JobContext
-      navigate('/manager-dashboard');      // Redirect to the manager dashboard on success
+      navigate('/jobs');      // Redirect to the manager dashboard on success
     } catch (error) {
       console.error('Error creating job:', error); // Log any errors
       alert('Failed to create job. Please try again.');
@@ -99,7 +99,7 @@ const CreateJob = () => {
     <div style={styles.container} className="container">
       {/* Header with back button and page title */}
       <header style={styles.header} className="stack-on-mobile">
-        <button onClick={() => navigate('/manager-dashboard')} style={styles.backBtn}>
+        <button onClick={() => navigate('/jobs')} style={styles.backBtn}>
           <ArrowLeft size={20} />
           <span>Back to Dashboard</span>
         </button>
@@ -221,7 +221,7 @@ const CreateJob = () => {
 
           {/* Action buttons — Cancel and Create Job */}
           <div style={styles.buttonGroup} className="stack-on-mobile">
-            <button type="button" onClick={() => navigate('/manager-dashboard')} style={styles.cancelBtn} className="full-width-on-mobile" disabled={isSubmitting}>Cancel</button>
+            <button type="button" onClick={() => navigate('/jobs')} style={styles.cancelBtn} className="full-width-on-mobile" disabled={isSubmitting}>Cancel</button>
             <button type="submit" style={{ ...styles.submitBtn, opacity: isSubmitting ? 0.7 : 1 }} className="full-width-on-mobile" disabled={isSubmitting}>
               {isSubmitting ? 'Creating Job...' : 'Create Job'}
             </button>

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 // Import navigation and URL parameter hooks
 import { useNavigate, useParams } from 'react-router-dom';
 // Import the shared job context for job data
-import { useJobs } from '../context/JobContext';
+import { useJobs } from '../../context/JobContext';
 // Import axios for making HTTP API requests
 import axios from 'axios';
 // Import icons used in the task panel UI
@@ -192,9 +192,9 @@ const WorkerTaskPanel = () => {
   // Navigate back to the appropriate dashboard based on the user's role
   const goBack = () => {
     if (role === 'Production Staff') {
-      navigate('/worker-dashboard');    // Workers go to their dashboard
+      navigate('/jobs/worker');    // Workers go to their dashboard
     } else {
-      navigate('/manager-dashboard');   // Managers go to the manager dashboard
+      navigate('/jobs');   // Managers go to the manager dashboard
     }
   };
 

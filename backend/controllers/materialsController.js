@@ -1,4 +1,4 @@
-const pool = require('../config/dbPromise');
+const pool = require('../config/db');
 
 exports.getMaterials = async (req, res) => {
   try {

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 // Import navigation and URL parameter hooks
 import { useNavigate, useParams } from 'react-router-dom';
 // Import the shared job context to read and update job data
-import { useJobs } from '../context/JobContext';
+import { useJobs } from '../../context/JobContext';
 // Import icons used in the edit form UI
 import { ChevronLeft, Plus, Trash2 } from 'lucide-react';
 
@@ -71,7 +71,7 @@ const EditJob = () => {
     if (!isFormValid()) return;   // Don't submit if validation fails
     
     updateJob(id, formData);       // Send the updated data to the backend
-    navigate('/manager-dashboard'); // Redirect to the dashboard
+    navigate('/jobs'); // Redirect to the dashboard
   };
 
   // Add a new empty part to the parts list
@@ -105,7 +105,7 @@ const EditJob = () => {
     <div style={styles.container} className="container">
       <header style={styles.header} className="stack-on-mobile">
         <div style={styles.headerTop}>
-          <button onClick={() => navigate('/manager-dashboard')} style={styles.backBtn}>
+          <button onClick={() => navigate('/jobs')} style={styles.backBtn}>
             <ChevronLeft size={20} />
             <span>Back to Dashboard</span>
           </button>
