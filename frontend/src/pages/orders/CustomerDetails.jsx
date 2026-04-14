@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import API from '../../api/api';
+import UserIdentityHeader from '../../components/UserIdentityHeader';
+
 
 
 function StatusBadge({ status }) {
@@ -38,8 +40,13 @@ export default function CustomerDetails() {
 
   return (
     <div className="max-w-screen-xl mx-auto px-6 py-8">
-      <Link to="/orders/customers" className="text-sm text-blue-600 font-bold hover:underline mb-6 inline-block">← Back to Directory</Link>
-
+      <div className="flex justify-between items-start mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">{data ? data.name : 'Customer Details'}</h1>
+          <p className="text-slate-500 mt-1">Detailed view of customer history and spend analytics</p>
+        </div>
+        <UserIdentityHeader />
+      </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Profile Card */}

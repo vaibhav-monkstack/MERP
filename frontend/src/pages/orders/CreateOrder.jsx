@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import API from '../../api/api';
+import UserIdentityHeader from '../../components/UserIdentityHeader';
+
 
 
 const STATUSES = ['new', 'pending', 'processing', 'shipped', 'delivered'];
@@ -76,15 +78,13 @@ export default function CreateOrder() {
 
   return (
     <div className="max-w-screen-xl mx-auto px-6 py-8 animate-in fade-in zoom-in duration-300">
-      {/* Header section */}
-      <div className="flex justify-between items-start mb-10">
+      <div className="flex justify-between items-start mb-8">
         <div>
-          <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-gray-900 transition mb-3">
-            <span>←</span> Back
-          </button>
-          <h1 className="text-3xl font-bold text-[#0f1021]">Create New Order</h1>
-          <p className="text-gray-500 mt-1">Enter complete details to manually register an order</p>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Create New Order</h1>
+          <p className="text-slate-500 mt-1 text-sm">Review incoming requests and log new manufacturing jobs</p>
         </div>
+        <UserIdentityHeader />
+      </div>
         
         <div className="flex gap-4">
           <button 

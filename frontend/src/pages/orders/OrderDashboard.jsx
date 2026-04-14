@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import API from '../../api/api';
+import UserIdentityHeader from '../../components/UserIdentityHeader';
+
 
 
 const PRIORITIES = ['low', 'medium', 'high', 'urgent'];
@@ -113,6 +115,7 @@ export default function Orders() {
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Order Overview</h1>
           <p className="text-slate-500 mt-1">Real-time tracking of manufacturing orders</p>
         </div>
+        <UserIdentityHeader />
       </div>
 
 

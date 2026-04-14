@@ -96,32 +96,11 @@ const UnifiedNavbar = () => {
           </div>
           
           <div className="flex items-center gap-4">
-            {/* User Identity Card - Styled to match image */}
-            <div className="hidden md:flex items-center gap-3 bg-white rounded-2xl px-4 py-1.5 shadow-sm border border-gray-100">
-              <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center">
-                <User size={20} className="text-indigo-600" />
-              </div>
-              <div className="flex flex-col justify-center">
-                <div className="text-[9px] text-gray-400 font-black tracking-widest uppercase leading-tight">
-                  Logged in as
-                </div>
-                <div className="text-sm font-black text-slate-800 leading-tight">
-                  {role === ROLES.ORDER_MANAGER ? 'Workshop Manager' : userName}
-                </div>
-              </div>
+            <div className="hidden sm:block text-[10px] text-slate-500 font-black tracking-widest uppercase">
+              v3.0 Master Theme
             </div>
-
-            {/* Logout Button - Dark Pill style */}
-            <button 
-              onClick={handleLogout}
-              className="flex items-center gap-2 px-6 py-2 bg-slate-900 border border-slate-700 hover:bg-slate-800 text-white rounded-full text-sm font-extrabold transition-all shadow-md group"
-            >
-              <LogOut size={16} className="text-slate-400 group-hover:text-white transition-colors" />
-              Logout
-            </button>
             
             {/* Mobile Menu Toggle */}
-
             <button 
               onClick={toggleMobileMenu}
               className="lg:hidden p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-all"
