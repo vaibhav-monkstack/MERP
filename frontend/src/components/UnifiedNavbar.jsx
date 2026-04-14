@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Package, ClipboardList, ShoppingCart, LayoutDashboard, Box, MessageSquare, Truck, Menu, X } from 'lucide-react';
+import { Package, ClipboardList, ShoppingCart, LayoutDashboard, Box, MessageSquare, Truck, Menu, X, Plus, Users } from 'lucide-react';
+
+
 import { ROLES } from '../utils/constants';
 
 const UnifiedNavbar = () => {
@@ -32,7 +34,18 @@ const UnifiedNavbar = () => {
     { name: 'Suppliers', path: '/inventory/suppliers', icon: Truck },
   ];
 
+  // Sub-links for Order Management
+  const orderSubLinks = [
+    { name: 'Dashboard', path: '/orders', icon: LayoutDashboard },
+    { name: 'New Order', path: '/orders/new', icon: Plus },
+    { name: 'Customers', path: '/orders/customers', icon: Users },
+  ];
+
+
+
   const isInventoryActive = location.pathname.startsWith('/inventory');
+  const isOrdersActive = location.pathname.startsWith('/orders');
+
   const filteredModules = mainModules.filter(m => m.allowedRoles.includes(role));
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -140,6 +153,32 @@ const UnifiedNavbar = () => {
           </div>
         </div>
       )}
+
+      {/* Secondary Sub-Navbar (Only for Orders) */}
+      {isOrdersActive && (
+        <div className="bg-white border-b border-gray-100 shadow-sm overflow-x-auto no-scrollbar">
+          <div className="max-w-screen-2xl mx-auto px-6 flex items-center h-12 gap-8">
+            {orderSubLinks.map((sub) => {
+              const isActive = location.pathname === sub.path || (sub.path === '/orders' && location.pathname === '/orders/');
+              return (
+                <Link
+                  key={sub.name}
+                  to={sub.path}
+                  className={`flex items-center gap-2 text-xs font-bold transition-colors whitespace-nowrap h-full border-b-2 px-1 ${
+                    isActive
+                      ? 'border-indigo-600 text-indigo-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-900'
+                  }`}
+                >
+                  <sub.icon size={14} />
+                  {sub.name}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

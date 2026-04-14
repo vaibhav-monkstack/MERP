@@ -1,23 +1,34 @@
 import React from 'react';
-import ComingSoon from '../components/ComingSoon';
-import TopHeader from '../components/TopHeader';
+import { Routes, Route, Link, useLocation } from 'react-router-dom';
+import OrderDashboard from './orders/OrderDashboard';
+import CreateOrder from './orders/CreateOrder';
+import Customers from './orders/Customers';
+import CustomerDetails from './orders/CustomerDetails';
+import { LayoutDashboard, Plus, Users } from 'lucide-react';
 
-// This is the top-level entry for the "Customer Orders" module (restricted to Order Managers)
+
 export default function OrderApp() {
+  const location = useLocation();
+
+  const subLinks = [
+    { name: 'Dashboard', path: '/orders', icon: LayoutDashboard },
+    { name: 'New Order', path: '/orders/new', icon: Plus },
+    { name: 'Customers', path: '/orders/customers', icon: Users },
+  ];
+
+
   return (
-    <div className="min-h-screen bg-slate-50 font-sans">
-      <div className="container-custom py-8">
-        <TopHeader 
-          title="Order Management System" 
-          subtitle="Manage customer orders, track fulfillment, and view shipment analytics"
-        />
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-12 text-center mt-10">
-          <ComingSoon title="Customer Order Dashboard" />
-          <p className="text-slate-500 mt-4 font-medium">
-            This module is strictly for Order Managers to handle customer-facing shipments.
-          </p>
-        </div>
+    <div className="min-h-screen bg-slate-50">
+      <div className="py-8 px-6">
+        <Routes>
+          <Route index element={<OrderDashboard />} />
+          <Route path="new" element={<CreateOrder />} />
+          <Route path="customers" element={<Customers />} />
+          <Route path="customers/:id" element={<CustomerDetails />} />
+        </Routes>
       </div>
     </div>
   );
 }
+
+

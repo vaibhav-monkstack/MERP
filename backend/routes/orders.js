@@ -74,10 +74,11 @@ router.get('/:id', async (req, res) => {
 // POST create order
 router.post('/', async (req, res) => {
   const { 
-    customer_name, email, mobile_number, delivery_address, 
+    customer_name, email, phone, address, 
     item_name, quantity, price, status, priority, 
     shipping_method, courier_details, tracking_number, remarks 
   } = req.body;
+
 
   if (!customer_name || !item_name || !quantity || !price)
     return res.status(400).json({ success: false, message: 'Missing required fields' });
@@ -90,29 +91,37 @@ router.post('/', async (req, res) => {
     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
   `;
   const params = [
-    customer_name, email, mobile_number, delivery_address, 
+    customer_name, email, phone || '', address || '', 
     item_name, quantity, price, status || 'new', priority || 'medium', 
     shipping_method, courier_details, tracking_number, remarks
   ];
+
 
   try {
     const [result] = await pool.query(insertQuery, params);
     const newOrderId = result.insertId;
 
-    // Async background tasks (not blocking the main response for better performance)
-    // 1. Sync Customer profile
+    // Async background tasks
+    // 1. Sync Customer profile (Auto-create or update stats)
     pool.query('SELECT * FROM customers WHERE name = ?', [customer_name])
       .then(([rows]) => {
         if (rows.length === 0) {
-          pool.query('INSERT INTO customers (name, email, address) VALUES (?,?,?)', 
-            [customer_name, email, delivery_address]);
+          // New Customer: Insert with initial stats
+          pool.query('INSERT INTO customers (name, email, phone, address, order_count, total_spent) VALUES (?,?,?,?,?,?)', 
+            [customer_name, email, phone || '', address || '', 1, price]);
+        } else {
+          // Existing Customer: Update stats
+          pool.query('UPDATE customers SET order_count = order_count + 1, total_spent = total_spent + ? WHERE name = ?', 
+            [price, customer_name]);
         }
-      }).catch(err => console.error('Auto-customer creation failed:', err.message));
+      }).catch(err => console.error('Auto-customer sync failed:', err.message));
 
     // 2. Log initial history
     pool.query('INSERT INTO order_history (order_id, status, remarks) VALUES (?,?,?)', 
       [newOrderId, status || 'new', 'Order created manually'])
       .catch(err => console.error('History log error:', err.message));
+
+
 
     res.status(201).json({ success: true, message: 'Order created', id: newOrderId });
   } catch (err) {
@@ -146,10 +155,11 @@ router.patch('/:id/status', async (req, res) => {
 // PUT update order
 router.put('/:id', async (req, res) => {
   const { 
-    customer_name, email, mobile_number, delivery_address, 
+    customer_name, email, phone, address, 
     item_name, quantity, price, status, priority, 
     shipping_method, courier_details, tracking_number, remarks 
   } = req.body;
+
 
   const query = `
     UPDATE orders SET 
@@ -159,11 +169,12 @@ router.put('/:id', async (req, res) => {
     WHERE id=?
   `;
   const params = [
-    customer_name, email, mobile_number, delivery_address, 
+    customer_name, email, phone || '', address || '', 
     item_name, quantity, price, status, priority, 
     shipping_method, courier_details, tracking_number, remarks,
     req.params.id
   ];
+
 
   try {
     const [result] = await pool.query(query, params);
@@ -180,7 +191,7 @@ router.delete('/:id', async (req, res) => {
   const orderId = req.params.id;
 
   try {
-    // 1. Get customer name before deleting
+    // 1. Get customer name before deleting order
     const [orderRows] = await pool.query('SELECT customer_name FROM orders WHERE id = ?', [orderId]);
     if (orderRows.length === 0) return res.status(404).json({ success: false, message: 'Order not found' });
 
@@ -189,19 +200,15 @@ router.delete('/:id', async (req, res) => {
     // 2. Delete the order
     await pool.query('DELETE FROM orders WHERE id = ?', [orderId]);
 
-    // 3. Cleanup customer if no other orders exist (Background)
-    pool.query('SELECT COUNT(*) as count FROM orders WHERE customer_name = ?', [customerName])
-      .then(([countRows]) => {
-        if (countRows[0].count === 0) {
-          pool.query('DELETE FROM customers WHERE name = ?', [customerName]);
-        }
-      }).catch(err => console.error('Cleanup customer error:', err.message));
+    // 3. Delete the associated customer (As requested for 1:1 bond)
+    await pool.query('DELETE FROM customers WHERE name = ?', [customerName]);
 
-    res.json({ success: true, message: 'Order and associated contact cleaned up successfully' });
+    res.json({ success: true, message: 'Order and associated customer profile deleted successfully' });
   } catch (err) {
     console.error(`DELETE /api/orders/${orderId} error:`, err);
     res.status(500).json({ success: false, message: err.message });
   }
 });
+
 
 module.exports = router;

@@ -50,4 +50,17 @@ router.post('/', async (req, res) => {
   }
 });
 
+// DELETE customer
+router.delete('/:id', async (req, res) => {
+  try {
+    const [result] = await pool.query('DELETE FROM customers WHERE id = ?', [req.params.id]);
+    if (!result.affectedRows) return res.status(404).json({ success: false, message: 'Customer not found' });
+    res.json({ success: true, message: 'Customer deleted' });
+  } catch (err) {
+    console.error(`DELETE /api/customers/${req.params.id} error:`, err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 module.exports = router;
+
