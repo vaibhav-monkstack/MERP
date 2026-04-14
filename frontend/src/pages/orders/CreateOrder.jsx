@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import API from '../../api/api';
-import UserIdentityHeader from '../../components/UserIdentityHeader';
+import TopHeader from '../../components/TopHeader';
+
 
 
 
@@ -77,14 +78,12 @@ export default function CreateOrder() {
   };
 
   return (
-    <div className="max-w-screen-xl mx-auto px-6 py-8 animate-in fade-in zoom-in duration-300">
-      <div className="flex justify-between items-start mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Create New Order</h1>
-          <p className="text-slate-500 mt-1 text-sm">Review incoming requests and log new manufacturing jobs</p>
-        </div>
-        <UserIdentityHeader />
-      </div>
+    <div className="max-w-screen-xl mx-auto px-6 py-8">
+      <TopHeader 
+        title="Create New Order"
+        subtitle="Review incoming requests and log new manufacturing jobs"
+      />
+
         
         <div className="flex gap-4">
           <button 

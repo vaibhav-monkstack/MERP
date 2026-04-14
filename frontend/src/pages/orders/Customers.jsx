@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import API from '../../api/api';
-import UserIdentityHeader from '../../components/UserIdentityHeader';
+import TopHeader from '../../components/TopHeader';
+
 
 
 
@@ -49,13 +50,11 @@ export default function Customers() {
 
   return (
     <div className="max-w-screen-xl mx-auto px-6 py-8">
-      <div className="flex justify-between items-start mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Customers Directory</h1>
-          <p className="text-slate-500 mt-1">Manage and monitor customer relationships and spend</p>
-        </div>
-        <UserIdentityHeader />
-      </div>
+      <TopHeader 
+        title="Customers Directory"
+        subtitle="Manage and monitor customer relationships and spend"
+      />
+
 
 
 

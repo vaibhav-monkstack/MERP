@@ -1,18 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import API from '../../api/api';
-import UserIdentityHeader from '../../components/UserIdentityHeader';
-
-
+import TopHeader from '../../components/TopHeader';
 
 const PRIORITIES = ['low', 'medium', 'high', 'urgent'];
 const STATUSES = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
-const EMPTY_FORM = { customer_id: '', customer_name: '', item_name: '', quantity: 1, price: '', status: 'pending', priority: 'medium', remarks: '' };
-
-
-function getProgress(status) {
-  return { pending: 0, processing: 40, shipped: 70, delivered: 100, cancelled: 0 }[status] || 0;
-}
 
 function StatusBadge({ status }) {
   const map = {
@@ -56,8 +48,6 @@ function StatCard({ label, value, sub, icon, bg }) {
   );
 }
 
-const inputCls = "w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition-all";
-
 export default function Orders() {
   const navigate                        = useNavigate();
   const [orders, setOrders]             = useState([]);
@@ -65,8 +55,6 @@ export default function Orders() {
   const [loading, setLoading]           = useState(true);
   const [search, setSearch]             = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
-
-
 
   const fetchData = useCallback(() => {
     setLoading(true);
@@ -78,7 +66,6 @@ export default function Orders() {
       API.get('/orders', { params }),
       API.get('/customers')
     ]).then(([ordersRes, customersRes]) => {
-
       setOrders(ordersRes.data.data);
       setCustomers(customersRes.data.data);
     })
@@ -88,37 +75,27 @@ export default function Orders() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-
-
   const handleDelete = async id => {
     if (!window.confirm('Delete this order?')) return;
     await API.delete(`/orders/${id}`);
     fetchData();
-
   };
 
   const handleStatusChange = async (id, status) => {
     await API.patch(`/orders/${id}/status`, { status });
     fetchData();
-
   };
 
   const openEdit = o => {
     navigate('/orders/new', { state: { editing: o } });
   };
 
-
   return (
     <div className="max-w-screen-xl mx-auto px-6 py-8 text-gray-900">
-      <div className="flex justify-between items-end mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Order Overview</h1>
-          <p className="text-slate-500 mt-1">Real-time tracking of manufacturing orders</p>
-        </div>
-        <UserIdentityHeader />
-      </div>
-
-
+      <TopHeader 
+        title="Order Overview"
+        subtitle="Real-time tracking of manufacturing orders"
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <StatCard label="Total Orders" value={orders.length} sub="Cataloged items" icon="📦" bg="bg-blue-50 text-blue-600" />
@@ -153,7 +130,6 @@ export default function Orders() {
             >
               <span>+</span> New Order
             </button>
-
           </div>
         </div>
 
@@ -178,7 +154,6 @@ export default function Orders() {
                     <div className="font-bold text-gray-900">{o.item_name}</div>
                     <div className="text-[11px] text-gray-400 font-medium">ORD-{String(o.id).padStart(3, '0')} • {new Date(o.created_at).toLocaleDateString()}</div>
                   </td>
-
                   <td className="px-6 py-5">
                     <div className="text-sm font-semibold text-gray-700">{o.linked_customer_name || o.customer_name || 'Walk-in'}</div>
                     <div className="text-[10px] text-gray-400">{o.linked_customer_email || 'No email'}</div>
@@ -204,8 +179,6 @@ export default function Orders() {
           </table>
         </div>
       </div>
-
-
     </div>
   );
 }

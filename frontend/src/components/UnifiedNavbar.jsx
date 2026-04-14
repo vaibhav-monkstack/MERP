@@ -96,10 +96,6 @@ const UnifiedNavbar = () => {
           </div>
           
           <div className="flex items-center gap-4">
-            <div className="hidden sm:block text-[10px] text-slate-500 font-black tracking-widest uppercase">
-              v3.0 Master Theme
-            </div>
-            
             {/* Mobile Menu Toggle */}
             <button 
               onClick={toggleMobileMenu}
@@ -108,6 +104,7 @@ const UnifiedNavbar = () => {
               {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
+
 
         </div>
 

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import API from '../../api/api';
-import UserIdentityHeader from '../../components/UserIdentityHeader';
+import TopHeader from '../../components/TopHeader';
+
 
 
 
@@ -40,13 +41,11 @@ export default function CustomerDetails() {
 
   return (
     <div className="max-w-screen-xl mx-auto px-6 py-8">
-      <div className="flex justify-between items-start mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">{data ? data.name : 'Customer Details'}</h1>
-          <p className="text-slate-500 mt-1">Detailed view of customer history and spend analytics</p>
-        </div>
-        <UserIdentityHeader />
-      </div>
+      <TopHeader 
+        title={data ? data.name : 'Customer Details'}
+        subtitle="Detailed view of customer history and spend analytics"
+      />
+
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Profile Card */}
