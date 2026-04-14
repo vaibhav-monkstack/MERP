@@ -18,7 +18,7 @@ import ManageTeams from './pages/ManageTeams';           // Team and worker mana
 import ProtectedRoute from './components/ProtectedRoute'; // RBAC protection component
 
 // --- INVENTORY APP ---
-import InventoryApp from './inventory/InventoryApp';
+import InventoryApp from './pages/InventoryApp';
 import OrderApp from './pages/OrderApp';
 
 // --- UNIFIED NAVBAR ---

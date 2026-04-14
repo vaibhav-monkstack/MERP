@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import API from "../api/api";
+import API from "../../api/api";
 import TopHeader from "../../components/TopHeader";
 import { ArrowLeft, PackagePlus, AlertCircle } from "lucide-react";
 

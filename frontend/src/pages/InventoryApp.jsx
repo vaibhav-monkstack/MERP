@@ -1,10 +1,10 @@
 import { Routes, Route } from "react-router-dom";
-import Dashboard from "./pages/Dashboard";
-import Materials from "./pages/Materials";
-import Requests from "./pages/Requests";
-import Suppliers from "./pages/Suppliers";
-import NewOrder from "./pages/NewOrder";
-import Orders from "./pages/Orders";
+import Dashboard from "./inventory/Dashboard";
+import Materials from "./inventory/Materials";
+import Requests from "./inventory/Requests";
+import Suppliers from "./inventory/Suppliers";
+import NewOrder from "./inventory/NewOrder";
+import Orders from "./inventory/Orders";
 
 function InventoryApp() {
   // Strict siloing is handled in App.jsx via ProtectedRoute.

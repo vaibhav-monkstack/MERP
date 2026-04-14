@@ -6,77 +6,71 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 // Import icons from lucide-react for visual elements
 import { Factory, Eye, EyeOff } from 'lucide-react';
+import { ROLES } from '../utils/constants';
 
 // ============================================================
-// LOGIN PAGE — Authentication screen for both Job Managers and Production Staff
-// Users enter email, password, and select their role to log in.
+// LOGIN PAGE — Authentication screen for all platform roles
+// Users enter email and password. Role is determined by the server.
 // On success, a JWT token is stored in localStorage for future API requests.
 // ============================================================
 
 const Login = () => {
-  // Form state — stores the user's input values
-  const [email, setEmail] = useState('');           // Email address input
-  const [password, setPassword] = useState('');      // Password input
-  const [role, setRole] = useState('Job Manager');   // Selected role dropdown (default: Job Manager)
-  const [error, setError] = useState('');             // Error message to display on failed login
-  const [showPassword, setShowPassword] = useState(false); // Toggle password visibility (eye icon)
-  const [loading, setLoading] = useState(false);      // Loading state while login request is in progress
-  const navigate = useNavigate();                      // Hook for navigating to different pages
+  // Form state
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [role, setRole] = useState(ROLES.JOB_MANAGER); // UI display role
+  const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   // Handle the login form submission
   const handleLogin = async (e) => {
-    e.preventDefault();  // Prevent the default form submission (page reload)
-    setError('');         // Clear any previous error message
-    setLoading(true);     // Show loading state on the button
+    e.preventDefault();
+    setError('');
+    setLoading(true);
 
     try {
-      // Use environment variable for API base or fallback to provided production backend URL
-      const API_BASE = import.meta.env.VITE_API_URL || 'https://manufacturing-company-website.onrender.com/api';
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
       // Send POST request to the login API endpoint
-      // "username" field sends the email (backend expects "username")
       const response = await axios.post(`${API_BASE}/auth/login`, {
-        username: email,   // Email address used as username
-        password: password, // Plain text password
-        role: role          // Selected role (Job Manager or Production Staff)
+        username: email,   // Validated by server
+        password: password
       });
 
-      // Extract the response data — token for auth, user info for display
       const { token, role: userRole, userId, userName } = response.data;
       
-      // Store authentication data in localStorage so it persists across page refreshes
-      localStorage.setItem('token', token);       // JWT token for API authorization
-      localStorage.setItem('role', userRole);      // User's role for conditional rendering
-      localStorage.setItem('userId', userId);      // User's database ID
-      localStorage.setItem('userName', userName);  // User's display name
+      // Store auth data
+      localStorage.setItem('token', token);
+      localStorage.setItem('role', userRole);
+      localStorage.setItem('userId', userId);
+      localStorage.setItem('userName', userName);
 
-      // Redirect to the appropriate dashboard based on the user's role
+      // Redirect map based on verified server role
       const redirectionMap = {
-        'Job Manager': '/manager-dashboard',
-        'Order Manager': '/orders',
-        'Inventory Manager': '/inventory',
-        'Production Staff': '/worker-dashboard'
+        [ROLES.JOB_MANAGER]: '/manager-dashboard',
+        [ROLES.ORDER_MANAGER]: '/orders',
+        [ROLES.INVENTORY_MANAGER]: '/inventory',
+        [ROLES.PRODUCTION_STAFF]: '/worker-dashboard'
       };
 
       const targetPath = redirectionMap[userRole] || '/login';
       navigate(targetPath);
     } catch (err) {
-      // If login fails, display the error message from the backend (or a default message)
       setError(err.response?.data?.message || 'Invalid credentials. Please try again.');
     } finally {
-      setLoading(false); // Reset loading state regardless of success or failure
+      setLoading(false);
     }
   };
 
-  // Fill in demo credentials for quick testing
-  // These match the seeded user accounts in the database
-  // Fill in demo credentials for quick testing
+  // Fill in demo credentials
   const setDemoCredentials = (type) => {
     const demos = {
-      'job-manager': { email: 'manager@factory.com', pass: 'manager123', role: 'Job Manager' },
-      'order-manager': { email: 'order@factory.com', pass: 'order123', role: 'Order Manager' },
-      'inventory-manager': { email: 'inventory@factory.com', pass: 'inventory123', role: 'Inventory Manager' },
-      'worker': { email: 'worker@factory.com', pass: 'worker123', role: 'Production Staff' }
+      'job-manager': { email: 'admin@factory.com', pass: 'admin123', role: ROLES.JOB_MANAGER },
+      'order-manager': { email: 'order@factory.com', pass: 'order123', role: ROLES.ORDER_MANAGER },
+      'inventory-manager': { email: 'inventory@factory.com', pass: 'inventory123', role: ROLES.INVENTORY_MANAGER },
+      'worker': { email: 'worker@factory.com', pass: 'worker123', role: ROLES.PRODUCTION_STAFF }
     };
 
     const demo = demos[type];

@@ -1,9 +1,9 @@
 const express = require('express');
 const router  = express.Router();
+const pool    = require('../config/dbPromise');
 
 // GET all customers
-router.get('/', (req, res) => {
-  const db = req.app.locals.db;
+router.get('/', async (req, res) => {
   const query = `
     SELECT c.*, 
     (SELECT COUNT(*) FROM orders WHERE customer_name = c.name) as total_orders,
@@ -11,38 +11,43 @@ router.get('/', (req, res) => {
     FROM customers c
     ORDER BY c.name ASC
   `;
-  db.query(query, (err, rows) => {
-    if (err) return res.status(500).json({ success: false, message: err.message });
+  try {
+    const [rows] = await pool.query(query);
     res.json({ success: true, data: rows });
-  });
+  } catch (err) {
+    console.error('GET /api/customers error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 // GET customer details with order history
-router.get('/:id', (req, res) => {
-  const db = req.app.locals.db;
-  db.query('SELECT * FROM customers WHERE id = ?', [req.params.id], (err, rows) => {
-    if (err) return res.status(500).json({ success: false, message: err.message });
-    if (rows.length === 0) return res.status(404).json({ success: false, message: 'Customer not found' });
+router.get('/:id', async (req, res) => {
+  try {
+    const [customerRows] = await pool.query('SELECT * FROM customers WHERE id = ?', [req.params.id]);
+    if (customerRows.length === 0) return res.status(404).json({ success: false, message: 'Customer not found' });
     
-    const customer = rows[0];
-    db.query('SELECT * FROM orders WHERE customer_name = ? ORDER BY created_at DESC', [customer.name], (err, orders) => {
-      if (err) return res.status(500).json({ success: false, message: err.message });
-      res.json({ success: true, data: { ...customer, orders } });
-    });
-  });
+    const customer = customerRows[0];
+    const [orders] = await pool.query('SELECT * FROM orders WHERE customer_name = ? ORDER BY created_at DESC', [customer.name]);
+    res.json({ success: true, data: { ...customer, orders } });
+  } catch (err) {
+    console.error(`GET /api/customers/${req.params.id} error:`, err);
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 // POST create customer
-router.post('/', (req, res) => {
-  const db = req.app.locals.db;
+router.post('/', async (req, res) => {
   const { name, email, phone, address } = req.body;
   if (!name) return res.status(400).json({ success: false, message: 'Name is required' });
 
-  db.query('INSERT INTO customers (name, email, phone, address) VALUES (?,?,?,?)', 
-    [name, email, phone, address], (err, result) => {
-    if (err) return res.status(500).json({ success: false, message: err.message });
+  try {
+    const [result] = await pool.query('INSERT INTO customers (name, email, phone, address) VALUES (?,?,?,?)', 
+      [name, email, phone, address]);
     res.status(201).json({ success: true, message: 'Customer created', id: result.insertId });
-  });
+  } catch (err) {
+    console.error('POST /api/customers error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 module.exports = router;

@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const db = require("../config/db");
+const pool = require("../config/dbPromise");
 
 // ✅ CREATE ORDER
-router.post("/", (req, res) => {
+router.post("/", async (req, res) => {
   const {
     order_id,
     product,
@@ -19,32 +19,28 @@ router.post("/", (req, res) => {
     VALUES (?, ?, ?, ?, ?, ?)
   `;
 
-  db.query(
-    sql,
-    [order_id, product, customer, quantity, delivery_date, inventory_status],
-    (err, result) => {
-      if (err) {
-        console.error("DB Error:", err);
-        return res.status(500).json(err);
-      }
+  try {
+    await pool.query(
+      sql,
+      [order_id, product, customer, quantity, delivery_date, inventory_status]
+    );
 
-      res.json({ message: "Order created successfully" });
-    }
-  );
+    res.json({ message: "Order created successfully" });
+  } catch (err) {
+    console.error("DB Error:", err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// ✅ GET ORDERS (for your dashboard later)
-router.get("/", (req, res) => {
-  const sql = "SELECT * FROM inv_orders ORDER BY id DESC";
-
-  db.query(sql, (err, result) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json(err);
-    }
-
+// ✅ GET ORDERS
+router.get("/", async (req, res) => {
+  try {
+    const [result] = await pool.query("SELECT * FROM inv_orders ORDER BY id DESC");
     res.json(result);
-  });
+  } catch (err) {
+    console.error("GET Orders Error:", err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 module.exports = router;

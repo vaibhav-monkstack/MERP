@@ -19,22 +19,12 @@
   @apply container mx-auto px-4 sm:px-6 lg:px-8;
 }
 
+/* 
+  Refined Grid System 
+  Using Tailwind v4 @apply for clean responsive grids
+*/
 .stat-grid {
-  display: grid;
-  grid-template-columns: repeat(1, 1fr);
-  gap: 1rem;
-}
-
-@media (min-width: 640px) {
-  .stat-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (min-width: 1024px) {
-  .stat-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
+  @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10;
 }
 
 .table-container {

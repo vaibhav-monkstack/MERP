@@ -5,8 +5,7 @@ const helmet  = require('helmet');
 const morgan  = require('morgan');
 
 // Database Connections
-const db        = require('./config/db');        // MySQL2 callback pool/connection
-const dbPromise = require('./config/dbPromise'); // MySQL2 promise pool
+const db = require('./config/dbPromise'); // MySQL2 promise pool
 
 // Route imports
 const ordersRoutes      = require('./routes/orders');

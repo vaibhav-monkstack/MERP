@@ -1,5 +1,6 @@
 // Import the database connection pool for running queries
 const pool = require('../config/dbPromise');
+const bcrypt = require('bcryptjs');
 
 // ============================================================
 // TEAM CONTROLLER — Handles team management and worker account operations
@@ -192,10 +193,13 @@ exports.createWorker = async (req, res) => {
   }
 
   try {
+    // Hash the password for security using bcrypt
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     // Insert a new user with the "Production Staff" role
     const [result] = await pool.query(
       "INSERT INTO users (email, name, password, role) VALUES (?, ?, ?, 'Production Staff')",
-      [email.trim(), name.trim(), password] // Trim whitespace from email and name
+      [email.trim(), name.trim(), hashedPassword] // Store the hashed password, not plain text
     );
     // Return 201 Created with the new worker's data (excluding password for security)
     res.status(201).json({
@@ -205,7 +209,7 @@ exports.createWorker = async (req, res) => {
       role: 'Production Staff'   // Always set to Production Staff
     });
   } catch (error) {
-    // Handle duplicate email error (emails must be unique)
+    // Handle duplicate email error
     if (error.code === 'ER_DUP_ENTRY') {
       return res.status(409).json({ message: 'A user with this email already exists' });
     }

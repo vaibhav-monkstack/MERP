@@ -1,9 +1,9 @@
 const express = require('express');
 const router  = express.Router();
+const pool    = require('../config/dbPromise');
 
 // GET all orders with stats
-router.get('/', (req, res) => {
-  const db = req.app.locals.db;
+router.get('/', async (req, res) => {
   const { status, search } = req.query;
   let query = 'SELECT * FROM orders';
   const params = [];
@@ -23,15 +23,17 @@ router.get('/', (req, res) => {
   }
   query += ' ORDER BY created_at DESC';
 
-  db.query(query, params, (err, rows) => {
-    if (err) return res.status(500).json({ success: false, message: err.message });
+  try {
+    const [rows] = await pool.query(query, params);
     res.json({ success: true, data: rows });
-  });
+  } catch (err) {
+    console.error('GET /api/orders error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 // GET order summary/stats
-router.get('/stats', (req, res) => {
-  const db = req.app.locals.db;
+router.get('/stats', async (req, res) => {
   const query = `
     SELECT 
       COUNT(*) as total,
@@ -42,33 +44,35 @@ router.get('/stats', (req, res) => {
       SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled
     FROM orders
   `;
-  db.query(query, (err, rows) => {
-    if (err) return res.status(500).json({ success: false, message: err.message });
+  try {
+    const [rows] = await pool.query(query);
     res.json({ success: true, data: rows[0] });
-  });
+  } catch (err) {
+    console.error('GET /api/orders/stats error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 // GET single order details with history
-router.get('/:id', (req, res) => {
-  const db = req.app.locals.db;
+router.get('/:id', async (req, res) => {
   const orderId = req.params.id;
 
-  db.query('SELECT * FROM orders WHERE id = ?', [orderId], (err, rows) => {
-    if (err) return res.status(500).json({ success: false, message: err.message });
-    if (rows.length === 0) return res.status(404).json({ success: false, message: 'Order not found' });
+  try {
+    const [orderRows] = await pool.query('SELECT * FROM orders WHERE id = ?', [orderId]);
+    if (orderRows.length === 0) return res.status(404).json({ success: false, message: 'Order not found' });
     
-    const order = rows[0];
+    const order = orderRows[0];
+    const [history] = await pool.query('SELECT * FROM order_history WHERE order_id = ? ORDER BY created_at DESC', [orderId]);
     
-    db.query('SELECT * FROM order_history WHERE order_id = ? ORDER BY created_at DESC', [orderId], (err, history) => {
-      if (err) return res.status(500).json({ success: false, message: err.message });
-      res.json({ success: true, data: { ...order, history } });
-    });
-  });
+    res.json({ success: true, data: { ...order, history } });
+  } catch (err) {
+    console.error(`GET /api/orders/${orderId} error:`, err);
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 // POST create order
-router.post('/', (req, res) => {
-  const db = req.app.locals.db;
+router.post('/', async (req, res) => {
   const { 
     customer_name, email, mobile_number, delivery_address, 
     item_name, quantity, price, status, priority, 
@@ -78,7 +82,7 @@ router.post('/', (req, res) => {
   if (!customer_name || !item_name || !quantity || !price)
     return res.status(400).json({ success: false, message: 'Missing required fields' });
 
-  const query = `
+  const insertQuery = `
     INSERT INTO orders (
       customer_name, email, mobile_number, delivery_address, 
       item_name, quantity, price, status, priority, 
@@ -91,55 +95,56 @@ router.post('/', (req, res) => {
     shipping_method, courier_details, tracking_number, remarks
   ];
 
-  db.query(query, params, (err, result) => {
-    if (err) return res.status(500).json({ success: false, message: err.message });
-    
-    // Auto-sync Customer profile
-    db.query('SELECT * FROM customers WHERE name = ?', [customer_name], (cErr, cRows) => {
-      if (!cErr && cRows.length === 0) {
-        db.query('INSERT INTO customers (name, email, address) VALUES (?,?,?)', 
-          [customer_name, email, delivery_address], (insErr) => {
-            if (insErr) console.error('Auto-customer creation failed:', insErr.message);
-          });
-      }
-    });
+  try {
+    const [result] = await pool.query(insertQuery, params);
+    const newOrderId = result.insertId;
 
-    // Log initial history
-    db.query('INSERT INTO order_history (order_id, status, remarks) VALUES (?,?,?)', 
-      [result.insertId, status || 'new', 'Order created manually'], (hErr) => {
-        if (hErr) console.error('History log error:', hErr.message);
-      }
-    );
+    // Async background tasks (not blocking the main response for better performance)
+    // 1. Sync Customer profile
+    pool.query('SELECT * FROM customers WHERE name = ?', [customer_name])
+      .then(([rows]) => {
+        if (rows.length === 0) {
+          pool.query('INSERT INTO customers (name, email, address) VALUES (?,?,?)', 
+            [customer_name, email, delivery_address]);
+        }
+      }).catch(err => console.error('Auto-customer creation failed:', err.message));
 
-    res.status(201).json({ success: true, message: 'Order created', id: result.insertId });
-  });
+    // 2. Log initial history
+    pool.query('INSERT INTO order_history (order_id, status, remarks) VALUES (?,?,?)', 
+      [newOrderId, status || 'new', 'Order created manually'])
+      .catch(err => console.error('History log error:', err.message));
+
+    res.status(201).json({ success: true, message: 'Order created', id: newOrderId });
+  } catch (err) {
+    console.error('POST /api/orders error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 // PATCH update status
-router.patch('/:id/status', (req, res) => {
-  const db = req.app.locals.db;
+router.patch('/:id/status', async (req, res) => {
   const { status, remarks } = req.body;
   const valid = ['new', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned'];
   if (!valid.includes(status)) return res.status(400).json({ success: false, message: 'Invalid status' });
 
-  db.query('UPDATE orders SET status=? WHERE id=?', [status, req.params.id], (err, result) => {
-    if (err) return res.status(500).json({ success: false, message: err.message });
+  try {
+    const [result] = await pool.query('UPDATE orders SET status=? WHERE id=?', [status, req.params.id]);
     if (!result.affectedRows) return res.status(404).json({ success: false, message: 'Order not found' });
     
     // Log history
-    db.query('INSERT INTO order_history (order_id, status, remarks) VALUES (?,?,?)', 
-      [req.params.id, status, remarks || `Status changed to ${status}`], (hErr) => {
-        if (hErr) console.error('History log error:', hErr.message);
-      }
-    );
+    pool.query('INSERT INTO order_history (order_id, status, remarks) VALUES (?,?,?)', 
+      [req.params.id, status, remarks || `Status changed to ${status}`])
+      .catch(err => console.error('History log error:', err.message));
 
     res.json({ success: true, message: 'Status updated' });
-  });
+  } catch (err) {
+    console.error('PATCH /api/orders/status error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 // PUT update order
-router.put('/:id', (req, res) => {
-  const db = req.app.locals.db;
+router.put('/:id', async (req, res) => {
   const { 
     customer_name, email, mobile_number, delivery_address, 
     item_name, quantity, price, status, priority, 
@@ -160,42 +165,43 @@ router.put('/:id', (req, res) => {
     req.params.id
   ];
 
-  db.query(query, params, (err, result) => {
-    if (err) return res.status(500).json({ success: false, message: err.message });
+  try {
+    const [result] = await pool.query(query, params);
     if (!result.affectedRows) return res.status(404).json({ success: false, message: 'Order not found' });
     res.json({ success: true, message: 'Order updated' });
-  });
+  } catch (err) {
+    console.error(`PUT /api/orders/${req.params.id} error:`, err);
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 // DELETE
-router.delete('/:id', (req, res) => {
-  const db = req.app.locals.db;
+router.delete('/:id', async (req, res) => {
   const orderId = req.params.id;
 
-  // 1. Get customer name before deleting
-  db.query('SELECT customer_name FROM orders WHERE id = ?', [orderId], (err, rows) => {
-    if (err) return res.status(500).json({ success: false, message: err.message });
-    if (rows.length === 0) return res.status(404).json({ success: false, message: 'Order not found' });
+  try {
+    // 1. Get customer name before deleting
+    const [orderRows] = await pool.query('SELECT customer_name FROM orders WHERE id = ?', [orderId]);
+    if (orderRows.length === 0) return res.status(404).json({ success: false, message: 'Order not found' });
 
-    const customerName = rows[0].customer_name;
+    const customerName = orderRows[0].customer_name;
 
     // 2. Delete the order
-    db.query('DELETE FROM orders WHERE id = ?', [orderId], (delErr, result) => {
-      if (delErr) return res.status(500).json({ success: false, message: delErr.message });
+    await pool.query('DELETE FROM orders WHERE id = ?', [orderId]);
 
-      // 3. Check if any other orders exist for this customer
-      db.query('SELECT COUNT(*) as count FROM orders WHERE customer_name = ?', [customerName], (countErr, countRows) => {
-        if (!countErr && countRows[0].count === 0) {
-          // 4. No orders left, delete the customer profile
-          db.query('DELETE FROM customers WHERE name = ?', [customerName], (custDelErr) => {
-            if (custDelErr) console.error('Failed to cleanup customer:', custDelErr.message);
-          });
+    // 3. Cleanup customer if no other orders exist (Background)
+    pool.query('SELECT COUNT(*) as count FROM orders WHERE customer_name = ?', [customerName])
+      .then(([countRows]) => {
+        if (countRows[0].count === 0) {
+          pool.query('DELETE FROM customers WHERE name = ?', [customerName]);
         }
-      });
+      }).catch(err => console.error('Cleanup customer error:', err.message));
 
-      res.json({ success: true, message: 'Order and associated contact cleaned up successfully' });
-    });
-  });
+    res.json({ success: true, message: 'Order and associated contact cleaned up successfully' });
+  } catch (err) {
+    console.error(`DELETE /api/orders/${orderId} error:`, err);
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 module.exports = router;

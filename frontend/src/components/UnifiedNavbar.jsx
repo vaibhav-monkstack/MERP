@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Package, ClipboardList, ShoppingCart, LayoutDashboard, Box, MessageSquare, Truck, Menu, X } from 'lucide-react';
+import { ROLES } from '../utils/constants';
 
 const UnifiedNavbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -18,9 +19,9 @@ const UnifiedNavbar = () => {
 
   // Main high-level modules
   const mainModules = [
-    { name: 'Orders', path: '/orders', icon: ShoppingCart, allowedRoles: ['Order Manager'] },
-    { name: 'Jobs', path: '/manager-dashboard', icon: ClipboardList, allowedRoles: ['Job Manager'] },
-    { name: 'Inventory', path: '/inventory', icon: Package, allowedRoles: ['Inventory Manager'] },
+    { name: 'Orders', path: '/orders', icon: ShoppingCart, allowedRoles: [ROLES.ORDER_MANAGER] },
+    { name: 'Jobs', path: '/manager-dashboard', icon: ClipboardList, allowedRoles: [ROLES.JOB_MANAGER] },
+    { name: 'Inventory', path: '/inventory', icon: Package, allowedRoles: [ROLES.INVENTORY_MANAGER] },
   ];
 
   // Sub-links for Inventory Management

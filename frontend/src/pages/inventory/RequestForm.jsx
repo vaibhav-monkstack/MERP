@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import API from "../api/api";
+import API from "../../api/api";
 import { Send, ChevronDown } from "lucide-react";
 
 export default function RequestForm({ fetchData }) {

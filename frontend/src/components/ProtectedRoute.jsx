@@ -1,5 +1,6 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
+import { ROLES } from '../utils/constants';
 
 /**
  * ProtectedRoute Component
@@ -20,10 +21,10 @@ const ProtectedRoute = ({ allowedRoles, children }) => {
 
   // 2. Define the "Home" dashboard for each role (fallback redirection)
   const roleHomeMap = {
-    'Job Manager': '/manager-dashboard',
-    'Order Manager': '/inventory/orders',
-    'Inventory Manager': '/inventory',
-    'Production Staff': '/worker-dashboard'
+    [ROLES.JOB_MANAGER]: '/manager-dashboard',
+    [ROLES.ORDER_MANAGER]: '/orders',
+    [ROLES.INVENTORY_MANAGER]: '/inventory',
+    [ROLES.PRODUCTION_STAFF]: '/worker-dashboard'
   };
 
   // 3. If authenticated but role is not allowed, redirect to their respective home dashboard
