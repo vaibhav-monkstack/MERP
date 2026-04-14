@@ -103,9 +103,8 @@ export default function CreateOrder() {
             <span>💾</span> {saving ? 'Saving...' : 'Save Order'}
           </button>
         </div>
-      </div>
-
       <form id="orderForm" onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+
         
         {/* Left Column: Customer Details */}
         <div className="bg-white rounded-[32px] p-8 shadow-sm border border-gray-100">
