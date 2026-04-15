@@ -91,7 +91,7 @@ export default function CustomerDetails() {
               </div>
             </div>
 
-            <div className="mt-10 bg-indigo-600 rounded-3xl p-6 grid grid-cols-2 gap-4 shadow-lg shadow-indigo-100">
+            <div className="mt-10 bg-indigo-600 rounded-3xl p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 shadow-lg shadow-indigo-100">
               <div className="text-center text-white border-r border-indigo-500/50">
                 <div className="text-2xl font-black">{data.orders.length}</div>
                 <div className="text-[9px] font-black uppercase tracking-tighter opacity-70">Jobs Placed</div>
@@ -124,8 +124,8 @@ export default function CustomerDetails() {
             ) : (
               <div className="space-y-4">
                 {data.orders.map(o => (
-                  <div key={o.id} className="flex items-center justify-between p-5 rounded-[24px] border border-slate-50 hover:border-indigo-100 hover:bg-slate-50/50 transition-all group">
-                    <div className="flex items-center gap-5">
+                  <div key={o.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 rounded-[24px] border border-slate-50 hover:border-indigo-100 hover:bg-slate-50/50 transition-all group gap-4">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-5">
                       <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-indigo-600 group-hover:bg-white transition-colors shadow-sm">
                         <Package size={22} />
                       </div>
@@ -138,8 +138,8 @@ export default function CustomerDetails() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-10">
-                       <div className="text-right">
+                    <div className="flex w-full sm:w-auto items-center justify-between sm:justify-end gap-6 sm:gap-10 mt-2 sm:mt-0">
+                       <div className="text-left sm:text-right">
                          <div className="font-black text-slate-900 text-lg">₹{(o.price * o.quantity).toLocaleString('en-IN')}</div>
                          <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{o.quantity} UNIT{o.quantity > 1 ? 'S' : ''}</div>
                        </div>
