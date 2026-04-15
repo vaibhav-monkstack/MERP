@@ -293,61 +293,96 @@ const WorkerTaskPanel = () => {
             <thead>
               <tr>
                 <th style={styles.th}>Part Name</th>
+                <th style={styles.th}>Step</th>
                 <th style={styles.th}>Assigned To</th>
                 <th style={styles.th}>Status</th>
-                <th style={styles.th}>Deadline</th>
+                <th style={styles.th}>Scheduled</th>
                 <th style={styles.th}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredTasks.map((task) => (
-                <tr key={task.taskId} style={styles.tr}>
-                  <td style={styles.tdBold}>{task.partName}</td>
-                  <td style={styles.td}>{task.worker}</td>
-                  <td style={styles.td}>
-                    <span style={{
-                      ...styles.badge,
-                      backgroundColor: getStatusStyle(task.status).bg,
-                      color: getStatusStyle(task.status).text
-                    }}>
-                      {task.status}
-                    </span>
-                  </td>
-                  <td style={styles.td}>{task.deadline}</td>
-                  <td style={styles.td}>
-                    <div style={styles.actionCell}>
-                      <select
-                        style={styles.statusDropdown}
-                        value={task.status}
-                        onChange={(e) => handleStatusChange(task.taskId, e.target.value)}
-                      >
-                        <option value="Pending">Pending</option>
-                        <option value="In Progress">In Progress</option>
-                        <option value="Completed">Completed</option>
-                      </select>
+              {filteredTasks.map((task, idx) => {
+                  // Determine if this step is blocked:
+                  // A task is blocked if it has a dependsOn and that previous task isn't Completed yet.
+                  // We check within the same part (partName match), same job.
+                  const prevTask = task.dependsOn
+                    ? tasks.find(t => t.taskId === task.dependsOn)
+                    : null;
+                  const isBlocked = prevTask && prevTask.status !== 'Completed';
 
-                      {task.status === 'Pending' && (
-                        <button
-                          style={styles.startBtn}
-                          onClick={() => handleStatusChange(task.taskId, 'In Progress')}
+                  // Step color
+                  const STEP_COLORS = {
+                    'Cutting':   { bg:'#ede9fe', text:'#7c3aed' },
+                    'Shaping':   { bg:'#dbeafe', text:'#1d4ed8' },
+                    'Drilling':  { bg:'#fef3c7', text:'#d97706' },
+                    'Finishing': { bg:'#dcfce7', text:'#16a34a' },
+                  };
+                  const stepColor = task.processStep ? (STEP_COLORS[task.processStep] || { bg:'#f3f4f6', text:'#374151' }) : null;
+
+                  return (
+                  <tr key={task.taskId} style={styles.tr}>
+                    <td style={styles.tdBold}>{task.partName}</td>
+                    <td style={styles.td}>
+                      {task.processStep ? (
+                        <span style={{ padding:'3px 10px', borderRadius:'20px', fontSize:'11px', fontWeight:'700', backgroundColor: stepColor.bg, color: stepColor.text, whiteSpace:'nowrap' }}>
+                          {task.sequenceOrder ? `${task.sequenceOrder}. ` : ''}{task.processStep}
+                        </span>
+                      ) : <span style={{ color:'#9ca3af', fontSize:'12px' }}>Manual</span>}
+                    </td>
+                    <td style={styles.td}>{task.worker}</td>
+                    <td style={styles.td}>
+                      <div style={{ display:'flex', flexDirection:'column', gap:'4px' }}>
+                        <span style={{ ...styles.badge, backgroundColor: getStatusStyle(task.status).bg, color: getStatusStyle(task.status).text }}>
+                          {task.status}
+                        </span>
+                        {isBlocked && (
+                          <span style={{ display:'flex', alignItems:'center', gap:'4px', fontSize:'10px', color:'#dc2626', fontWeight:'700', backgroundColor:'#fee2e2', padding:'2px 8px', borderRadius:'20px', width:'fit-content' }}>
+                            🔒 Blocked
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td style={styles.td}>
+                      {task.scheduledStart && task.scheduledEnd
+                        ? <span style={{ fontSize:'12px', color:'#374151', fontWeight:'500', whiteSpace:'nowrap' }}>{task.scheduledStart} → {task.scheduledEnd}</span>
+                        : <span style={{ fontSize:'12px', color:'#9ca3af' }}>{task.deadline || '—'}</span>}
+                    </td>
+                    <td style={styles.td}>
+                      <div style={styles.actionCell}>
+                        <select
+                          style={{ ...styles.statusDropdown, opacity: isBlocked ? 0.5 : 1, cursor: isBlocked ? 'not-allowed' : 'pointer' }}
+                          value={task.status}
+                          onChange={(e) => !isBlocked && handleStatusChange(task.taskId, e.target.value)}
+                          disabled={isBlocked}
                         >
-                          <Play size={14} fill="currentColor" />
-                          <span>Start Task</span>
-                        </button>
-                      )}
-                      {task.status === 'In Progress' && (
-                        <button
-                          style={styles.finishBtn}
-                          onClick={() => handleStatusChange(task.taskId, 'Completed')}
-                        >
-                          <Check size={16} />
-                          <span>Finish Task</span>
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                          <option value="Pending">Pending</option>
+                          <option value="In Progress">In Progress</option>
+                          <option value="Completed">Completed</option>
+                        </select>
+
+                        {task.status === 'Pending' && !isBlocked && (
+                          <button
+                            style={styles.startBtn}
+                            onClick={() => handleStatusChange(task.taskId, 'In Progress')}
+                          >
+                            <Play size={14} fill="currentColor" />
+                            <span>Start</span>
+                          </button>
+                        )}
+                        {task.status === 'In Progress' && (
+                          <button
+                            style={styles.finishBtn}
+                            onClick={() => handleStatusChange(task.taskId, 'Completed')}
+                          >
+                            <Check size={16} />
+                            <span>Finish</span>
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                  );
+                })}
             </tbody>
           </table>
         </div>

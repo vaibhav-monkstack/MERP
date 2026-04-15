@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import API from "../../api/api";
+import toast from "react-hot-toast";
 import TopHeader from "../../components/TopHeader";
 import StatCard from "../../components/common/StatCard";
 import DataTable from "../../components/common/DataTable";
@@ -46,26 +47,45 @@ export default function Requests() {
 
   // UPDATE SINGLE
   const update = async (id, status) => {
-    const res = await API.put(`/requests/${id}`, { status });
-    alert(res.data.message);
-    fetchData();
+    try {
+      const res = await API.put(`/requests/${id}`, { status });
+      if (status === 'Approved') {
+        toast.success(res.data.message || 'Request approved');
+      } else if (status === 'Rejected') {
+        toast.error(res.data.message || 'Request rejected');
+      } else {
+        toast(res.data.message);
+      }
+      fetchData();
+    } catch (err) {
+      toast.error('Failed to update request');
+    }
   };
 
   // BULK UPDATE
   const bulkUpdate = async (status) => {
-    for (let id of selected) {
-      await API.put(`/requests/${id}`, { status });
+    try {
+      for (let id of selected) {
+        await API.put(`/requests/${id}`, { status });
+      }
+      if (status === 'Approved') {
+        toast.success(`${selected.length} request(s) approved`);
+      } else {
+        toast.error(`${selected.length} request(s) rejected`);
+      }
+      setSelected([]);
+      fetchData();
+    } catch (err) {
+      toast.error('Bulk update failed');
     }
-    alert(`${status} Done`);
-    setSelected([]);
-    fetchData();
   };
 
   // FILTER + SEARCH
   const filtered = safeData
     .filter(r => {
-      if (filter === "Pending") return r.status === "Pending";
-      if (filter === "Approved") return r.status === "Approved";
+      if (filter === "Pending")     return r.status === "Pending";
+      if (filter === "Approved")    return r.status === "Approved";
+      if (filter === "Rejected")    return r.status === "Rejected";
       if (filter === "In Progress") return r.status === "In Progress";
       return true;
     })
@@ -176,6 +196,7 @@ export default function Requests() {
                 <option value="All">All Status</option>
                 <option value="Pending">Pending</option>
                 <option value="Approved">Approved</option>
+                <option value="Rejected">Rejected</option>
                 <option value="In Progress">In Progress</option>
               </select>
             </div>

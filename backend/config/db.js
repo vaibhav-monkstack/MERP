@@ -213,6 +213,33 @@ const initializeTables = async () => {
       )
     `);
 
+    // =======================================================
+    // SCHEDULING COLUMNS — Add new columns to tasks table
+    // Uses SHOW COLUMNS to check existence first (compatible
+    // with all MySQL versions, including < 8.0).
+    // =======================================================
+    const schedulingColumns = [
+      { name: 'processStep',    def: 'VARCHAR(50)  DEFAULT NULL' },
+      { name: 'sequenceOrder',  def: 'INT          DEFAULT NULL' },
+      { name: 'scheduledStart', def: 'DATE         DEFAULT NULL' },
+      { name: 'scheduledEnd',   def: 'DATE         DEFAULT NULL' },
+      { name: 'dependsOn',      def: 'VARCHAR(50)  DEFAULT NULL' },
+    ];
+    try {
+      const [existingCols] = await connection.query('SHOW COLUMNS FROM tasks');
+      const colNames = existingCols.map(c => c.Field);
+      for (const col of schedulingColumns) {
+        if (!colNames.includes(col.name)) {
+          await connection.query(`ALTER TABLE tasks ADD COLUMN ${col.name} ${col.def}`);
+          console.log(`  ➕ Added column tasks.${col.name}`);
+        }
+      }
+      console.log('✅ Scheduling columns ready on tasks table');
+    } catch (e) {
+      // tasks table may not exist yet on a fresh DB — that's fine
+      console.warn('Scheduling column check skipped (tasks table not yet created):', e.message);
+    }
+
     connection.release();
   } catch (err) {
     console.error('❌ DB connection failed:', err.message);
