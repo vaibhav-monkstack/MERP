@@ -111,10 +111,6 @@ exports.updateRequestStatus = async (req, res) => {
     }
     await pool.query('UPDATE requests SET status=? WHERE id=?', [status, id]);
 
-    // Fetch the updated request to get the linked job_id
-    const [rows] = await pool.query('SELECT * FROM requests WHERE id=?', [id]);
-    const request = rows[0];
-
     // === AUTO JOB STATUS UPDATE — Only runs when a request is linked to a job ===
     if (request && request.job_id) {
       const jobId = request.job_id;
