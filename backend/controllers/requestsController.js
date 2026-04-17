@@ -139,9 +139,11 @@ exports.updateRequestStatus = async (req, res) => {
     await pool.query('UPDATE requests SET status=? WHERE id=?', [status, id]);
     console.log(`✅ Request #${id} status updated to "${status}"`);
 
+
     // Fetch the updated request to get the linked job_id
     const [rows] = await pool.query('SELECT * FROM requests WHERE id=?', [id]);
     const updatedRequest = rows[0];
+
 
     // === AUTO JOB STATUS UPDATE — Only runs when a request is linked to a job ===
     if (updatedRequest && updatedRequest.job_id) {
@@ -155,7 +157,6 @@ exports.updateRequestStatus = async (req, res) => {
         );
         console.log(`⚠️  Job ${jobId} flagged as 'Material Shortage' due to rejected request #${id}`);
       } else if (status === 'Approved') {
-        // Check if ALL requests for this job are now resolved (none still Pending)
         const [pendingRows] = await pool.query(
           "SELECT COUNT(*) as pendingCount FROM requests WHERE job_id=? AND status='Pending'",
           [jobId]
@@ -163,24 +164,35 @@ exports.updateRequestStatus = async (req, res) => {
         const pendingCount = pendingRows[0].pendingCount;
 
         if (pendingCount === 0) {
-          // All material requests have been resolved.
-          // Check none are rejected either (if any rejected, the shortage takes priority)
           const [rejectedRows] = await pool.query(
             "SELECT COUNT(*) as rejectedCount FROM requests WHERE job_id=? AND status='Rejected'",
             [jobId]
           );
-          const rejectedCount = rejectedRows[0].rejectedCount;
-
-          if (rejectedCount === 0) {
-            // All approved, none rejected → job is ready for production scheduling
+          if (rejectedRows[0].rejectedCount === 0) {
             await pool.query(
               "UPDATE jobs SET status='Materials Ready' WHERE id=? AND status='Created'",
               [jobId]
             );
-            console.log(`✅ Job ${jobId} is now 'Materials Ready' — all material requests approved`);
+            console.log(`✅ Job ${jobId} is now 'Materials Ready'`);
           }
-        } else {
-          console.log(`ℹ️  Job ${jobId}: ${pendingCount} material request(s) still pending`);
+        }
+      }
+    }
+
+    // === AUTO ORDER STATUS UPDATE — Runs when a request is linked to an order ===
+    if (request && request.order_id) {
+      const orderId = request.order_id;
+      
+      if (status === 'Approved') {
+        const [pendingRows] = await pool.query(
+          "SELECT COUNT(*) as pendingCount FROM requests WHERE order_id=? AND status='Pending'",
+          [orderId]
+        );
+        if (pendingRows[0].pendingCount === 0) {
+          await pool.query("UPDATE orders SET status='ready_to_approve' WHERE id=?", [orderId]);
+          await pool.query('INSERT INTO order_history (order_id, status, remarks) VALUES (?, ?, ?)', 
+            [orderId, 'ready_to_approve', 'All material requirements fulfilled. Ready for Production Approval.']);
+          console.log(`✅ Order #${orderId} synced to 'ready_to_approve'`);
         }
       }
     }

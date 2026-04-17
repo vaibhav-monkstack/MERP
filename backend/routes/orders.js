@@ -1,6 +1,7 @@
 const express = require('express');
 const router  = express.Router();
 const pool    = require('../config/db');
+const automation = require('../utils/automation');
 
 // GET all orders with stats
 router.get('/', async (req, res) => {
@@ -126,6 +127,10 @@ router.post('/', async (req, res) => {
 
 
 
+    // 3. Trigger Automation (REMOVED: Now triggered manually via approval gate)
+    // const orderData = { id: newOrderId, item_name, quantity, deadline, priority };
+    // automation.handleOrderCreated(orderData);
+
     res.status(201).json({ success: true, message: 'Order created', id: newOrderId });
   } catch (err) {
     console.error('POST /api/orders error:', err);
@@ -136,7 +141,7 @@ router.post('/', async (req, res) => {
 // PATCH update status
 router.patch('/:id/status', async (req, res) => {
   const { status, remarks } = req.body;
-  const valid = ['new', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned'];
+  const valid = ['new', 'awaiting_materials', 'ready_to_approve', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned'];
   if (!valid.includes(status)) return res.status(400).json({ success: false, message: 'Invalid status' });
 
   try {
@@ -147,6 +152,13 @@ router.patch('/:id/status', async (req, res) => {
     pool.query('INSERT INTO order_history (order_id, status, remarks) VALUES (?,?,?)', 
       [req.params.id, status, remarks || `Status changed to ${status}`])
       .catch(err => console.error('History log error:', err.message));
+
+    // === GATED WORKFLOW TRIGGERS ===
+    if (status === 'awaiting_materials') {
+      automation.handleMaterialCheck(req.params.id);
+    }
+    // MANUAL JOB CREATION: Job creation is now handled manually by the Job Manager
+    // from their dashboard, so we no longer trigger automation.handleOrderApproved here.
 
     res.json({ success: true, message: 'Status updated' });
   } catch (err) {

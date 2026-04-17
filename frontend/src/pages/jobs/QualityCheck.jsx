@@ -54,6 +54,22 @@ const QualityCheck = () => {
   const [reworkReason, setReworkReason] = useState('');       // Why rework is needed
   const [assignedTeam, setAssignReworkTo] = useState('');     // Which team handles the rework
   const [validationError, setValidationError] = useState(''); // Form validation error message
+  const [availableTeams, setAvailableTeams] = useState([]);   // Real teams from API
+
+  // Fetch real teams for the rework dropdown
+  useEffect(() => {
+    const fetchTeams = async () => {
+      try {
+        const res = await API.get('/teams', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
+        setAvailableTeams(res.data || []);
+      } catch (err) {
+        console.error('Failed to fetch teams:', err);
+      }
+    };
+    fetchTeams();
+  }, []);
 
   // If the job doesn't exist, show an error message
   if (!job) return <div style={{ padding: '40px' }}>Job not found.</div>;
@@ -275,10 +291,9 @@ const QualityCheck = () => {
                     onChange={(e) => setAssignReworkTo(e.target.value)}
                   >
                     <option value="">Select Team</option>
-                    <option value="Team Alpha">Team Alpha</option>
-                    <option value="Team Beta">Team Beta</option>
-                    <option value="Team Gamma">Team Gamma</option>
-                    <option value="Team Delta">Team Delta</option>
+                    {availableTeams.map(team => (
+                      <option key={team.id} value={team.name}>{team.name}</option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -339,33 +354,26 @@ const QualityCheck = () => {
               <h3 className="font-bold text-gray-900">Parts Completion</h3>
             </div>
             <div className="flex flex-col gap-4">
-              <div className="flex flex-col gap-1.5">
-                <div className="flex justify-between text-xs font-semibold text-gray-600">
-                  <span>Motor Housing</span>
-                  <span className="text-blue-500">100%</span>
-                </div>
-                <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
-                  <div className="bg-blue-500 h-full rounded-full" style={{ width: '100%' }}></div>
-                </div>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <div className="flex justify-between text-xs font-semibold text-gray-600">
-                  <span>Impeller</span>
-                  <span className="text-blue-500">50%</span>
-                </div>
-                <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
-                  <div className="bg-blue-500 h-full rounded-full" style={{ width: '50%' }}></div>
-                </div>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <div className="flex justify-between text-xs font-semibold text-gray-600">
-                  <span>Shaft Assembly</span>
-                  <span className="text-blue-500">20%</span>
-                </div>
-                <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
-                  <div className="bg-blue-500 h-full rounded-full" style={{ width: '20%' }}></div>
-                </div>
-              </div>
+              {(job.parts || []).map((part, idx) => {
+                const percent = part.requiredQty > 0 ? Math.round((part.completedQty / part.requiredQty) * 100) : 0;
+                return (
+                  <div key={part.id || idx} className="flex flex-col gap-1.5">
+                    <div className="flex justify-between text-xs font-semibold text-gray-600">
+                      <span>{part.name}</span>
+                      <span className="text-blue-500">{percent}%</span>
+                    </div>
+                    <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                      <div 
+                        className="bg-blue-500 h-full rounded-full transition-all duration-500" 
+                        style={{ width: `${percent}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                );
+              })}
+              {(!job.parts || job.parts.length === 0) && (
+                <p className="text-xs text-gray-400 italic">No parts defined for this job.</p>
+              )}
             </div>
           </div>
         </div>

@@ -49,7 +49,6 @@ const UnifiedNavbar = () => {
   // Sub-links for Order Management
   const orderSubLinks = [
     { name: 'Dashboard', path: '/orders', icon: LayoutDashboard },
-    { name: 'New Order', path: '/orders/new', icon: Plus },
     { name: 'Customers', path: '/orders/customers', icon: Users },
   ];
 

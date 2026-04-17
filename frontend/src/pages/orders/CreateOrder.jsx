@@ -35,6 +35,7 @@ export default function CreateOrder() {
   const editingOrder = location.state?.editing;
   
   const [customers, setCustomers] = useState([]);
+  const [templates, setTemplates] = useState([]);
   const [saving, setSaving] = useState(false);
   
   const [form, setForm] = useState({
@@ -56,6 +57,8 @@ export default function CreateOrder() {
 
   useEffect(() => {
     API.get('/customers').then(res => setCustomers(res.data.data)).catch(console.error);
+    API.get('/templates').then(res => setTemplates(res.data.data)).catch(console.error);
+    
     if (editingOrder) {
       setForm({
         ...editingOrder,
@@ -198,14 +201,23 @@ export default function CreateOrder() {
             </div>
 
             <div className="space-y-6">
-              <InputField 
-                label="Item Name / Model" 
-                icon={Layers} 
-                placeholder="e.g. Classic Watch Series 7" 
-                required 
-                value={form.item_name} 
-                onChange={e => setForm({...form, item_name: e.target.value})} 
-              />
+              <div>
+                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Item Name / Product Template *</label>
+                <div className="relative group">
+                  <Layers className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-600 transition-colors" size={16} />
+                  <select 
+                    required
+                    className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-medium focus:outline-none focus:border-indigo-500 focus:bg-white transition-all shadow-sm hover:border-slate-200 cursor-pointer"
+                    value={form.item_name}
+                    onChange={e => setForm({...form, item_name: e.target.value})}
+                  >
+                    <option value="">Select a Product Template</option>
+                    {templates.map(t => (
+                      <option key={t.id} value={t.name}>{t.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <InputField 

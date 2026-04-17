@@ -139,6 +139,25 @@ export const JobProvider = ({ children }) => {
     }
   };
 
+  // APPROVE JOB — Formally approves a pending job
+  const approveJob = async (id) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        await axios.post(`${API_BASE}/jobs/${id}/approve`, {}, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        // Update local status to 'Production'
+        setJobs(prev => prev.map(job => job.id === id ? { ...job, status: 'Production' } : job));
+        toast.success(`Job ${id} approved! Production started.`);
+      }
+    } catch (error) {
+      console.error('Error approving job:', error);
+      toast.error('Failed to approve job.');
+      throw error;
+    }
+  };
+
   // GET JOB BY ID — Finds a specific job from the local state array
   // This doesn't make an API call — it searches the already-loaded jobs
   const getJobById = (id) => jobs.find(job => job.id === id);
@@ -167,6 +186,43 @@ export const JobProvider = ({ children }) => {
   // GET QC RECORDS BY JOB ID — Filters QC records for a specific job from local state
   const getQCRecordsByJobId = (jobId) => qcRecords.filter(r => r.jobId === jobId);
 
+  // GET JOB PREVIEW — Fetch a dry-run production plan for an order
+  const getJobPreview = async (orderId) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        const response = await axios.get(`${API_BASE}/jobs/preview-init/${orderId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data.data;
+      }
+    } catch (error) {
+      console.error('Error fetching job preview:', error);
+      toast.error('Failed to load job plan preview');
+      throw error;
+    }
+  };
+
+  // CREATE JOB FROM ORDER — Manually convert confirmed order to production job
+  const createJobFromOrder = async (orderId) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        await axios.post(`${API_BASE}/jobs/manual-init/${orderId}`, {}, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        toast.success(`Job initialized for Order #${orderId}!`);
+        // Refresh jobs and pending orders
+        await fetchData();
+        await fetchPendingOrders();
+      }
+    } catch (error) {
+      console.error('Error creating job from order:', error);
+      toast.error(error.response?.data?.message || 'Failed to initialize job');
+      throw error;
+    }
+  };
+
   // Provide all the state and functions to child components via Context
   return (
     <JobContext.Provider value={{ 
@@ -180,7 +236,10 @@ export const JobProvider = ({ children }) => {
       addQCRecord,            // Function to create a new QC record
       getQCRecordsByJobId,    // Function to filter QC records by job ID
       pendingOrders,          // Array of confirmed orders ready for conversion
-      fetchPendingOrders      // Function to refresh pending orders list
+      fetchPendingOrders,     // Function to refresh pending orders list
+      approveJob,              // Function to formally approve a pending job
+      createJobFromOrder,      // Function to manually initialize job from order
+      getJobPreview           // Function to preview job plan before initialization
     }}>
       {children}  {/* Render all child components inside the provider */}
     </JobContext.Provider>

@@ -1,5 +1,6 @@
 // Import the database connection pool for running queries
 const pool = require('../config/db');
+const automation = require('../utils/automation');
 
 // ============================================================
 // JOB CONTROLLER — Handles CRUD operations for manufacturing jobs
@@ -41,10 +42,14 @@ exports.getJobs = async (req, res) => {
       pool.query(countQuery, countParams)
     ]);
     
-    // For each job, also fetch its associated parts from the job_parts table
+    // For each job, also fetch its associated parts and tasks
     for (let job of jobs) {
-      const [parts] = await pool.query('SELECT * FROM job_parts WHERE jobId = ?', [job.id]);
+      const [[parts], [tasks]] = await Promise.all([
+        pool.query('SELECT * FROM job_parts WHERE jobId = ?', [job.id]),
+        pool.query('SELECT * FROM tasks WHERE jobId = ?', [job.id])
+      ]);
       job.parts = parts;
+      job.tasks = tasks;
     }
     
     // Return jobs with pagination metadata
@@ -72,7 +77,7 @@ exports.getPendingOrders = async (req, res) => {
       SELECT o.id as orderId, o.customer_name, o.item_name, o.quantity, o.priority, o.deadline, o.created_at
       FROM orders o
       LEFT JOIN jobs j ON o.id = j.orderId
-      WHERE o.status = 'confirmed' AND j.orderId IS NULL
+      WHERE (o.status = 'confirmed' OR o.status = 'processing') AND j.orderId IS NULL
       ORDER BY o.created_at ASC
     `;
     
@@ -92,7 +97,7 @@ exports.createJob = async (req, res) => {
   const newJobId = `JOB-${Date.now()}`;
 
   // Set defaults for optional fields if they weren't provided
-  const status = jobData.status || 'Created';     // New jobs start in "Created" status
+  const status = jobData.status || 'Pending Approval';     // New jobs start in "Pending Approval" status
   const priority = jobData.priority || 'Medium';   // Default priority is "Medium"
   const progress = jobData.progress || 0;           // Initial progress is 0%
   
@@ -100,8 +105,9 @@ exports.createJob = async (req, res) => {
     // Insert the new job into the jobs table (added 'notes', 'alert', and 'orderId')
     await pool.query(
       'INSERT INTO jobs (id, product, quantity, team, status, priority, progress, deadline, notes, alert, orderId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [newJobId, jobData.product, jobData.quantity, jobData.team, status, priority, progress, jobData.deadline, jobData.notes || '', '', jobData.orderId || null]
+      [newJobId, jobData.product, jobData.quantity, jobData.team, status, priority, progress, jobData.deadline || null, jobData.notes || '', '', jobData.orderId || null]
     );
+
 
     // If this job was created from an order, update the original order's status to 'processing'
     if (jobData.orderId) {
@@ -222,6 +228,18 @@ exports.updateJob = async (req, res) => {
       // Build and execute the dynamic UPDATE query
       await pool.query(`UPDATE jobs SET ${fieldsToUpdate.join(', ')} WHERE id = ?`, values);
       console.log(`Updated job ${id} with:`, updatedData); // Log for tracking
+
+      // === STATUS SYNC: Job -> Order ===
+      if (updatedData.status === 'Completed') {
+        const [jobs] = await pool.query('SELECT orderId FROM jobs WHERE id = ?', [id]);
+        if (jobs.length > 0 && jobs[0].orderId) {
+          const orderId = jobs[0].orderId;
+          await pool.query('UPDATE orders SET status = "shipped" WHERE id = ?', [orderId]);
+          await pool.query('INSERT INTO order_history (order_id, status, remarks) VALUES (?, ?, ?)', 
+            [orderId, 'shipped', `Production job ${id} completed. Order ready for dispatch.`]);
+          console.log(`✅ Synced Job ${id} completion to Order #${orderId} (Shipped)`);
+        }
+      }
     }
 
     // Return success response
@@ -256,5 +274,135 @@ exports.deleteJob = async (req, res) => {
   } catch (error) {
     console.error('Error deleting job:', error);
     res.status(500).json({ message: 'Error deleting job' });
+  }
+};
+
+// APPROVE JOB — Transitions a job from 'Pending Approval' to 'Created'
+// Called when POST /api/jobs/:id/approve is hit
+exports.approveJob = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // 1. Fetch the job to check if it exists and get its orderId
+    const [jobs] = await pool.query('SELECT * FROM jobs WHERE id = ?', [id]);
+    const job = jobs[0];
+
+    if (!job) {
+      return res.status(404).json({ success: false, message: 'Job not found' });
+    }
+
+    // 2. Update status to 'Production' (Production Start)
+    await pool.query('UPDATE jobs SET status = "Production" WHERE id = ?', [id]);
+
+    // 3. Log approval in order history if linked to an order
+    if (job.orderId) {
+      await pool.query('INSERT INTO order_history (order_id, status, remarks) VALUES (?, ?, ?)', 
+        [job.orderId, 'processing', `Job ${id} approved by manager. Production started.`]);
+    }
+
+    console.log(`[Job Controller] Job ${id} approved by manager.`);
+
+    res.json({
+      success: true,
+      message: 'Job approved successfully. Production initiated.',
+      jobId: id
+    });
+  } catch (error) {
+    console.error('Error approving job:', error);
+    res.status(500).json({ success: false, message: 'Error approving job' });
+  }
+};
+// INITIALIZE JOB FROM ORDER — Manually converts a confirmed order into a job
+// Called when POST /api/jobs/manual-init/:orderId is hit
+exports.initializeJobFromOrder = async (req, res) => {
+  const { orderId } = req.params;
+
+  try {
+    // 1. Verify order exists and is confirmed
+    const [orderRows] = await pool.query('SELECT * FROM orders WHERE id = ?', [orderId]);
+    if (orderRows.length === 0) return res.status(404).json({ success: false, message: 'Order not found' });
+    
+    const order = orderRows[0];
+    if (order.status !== 'confirmed') {
+      return res.status(400).json({ success: false, message: 'Only confirmed orders can be initialized into jobs.' });
+    }
+
+    // 2. Trigger the automation logic manually
+    await automation.handleOrderApproved(orderId);
+
+    res.json({
+      success: true,
+      message: `Order #${orderId} successfully converted to a manufacturing job.`
+    });
+  } catch (error) {
+    console.error('Error manual job initialization:', error);
+    res.status(500).json({ success: false, message: 'Internal server error during job initialization' });
+  }
+};
+// GET JOB PREVIEW — Generates a dry-run of the job plan (parts and tasks) based on automation logic
+// Called when GET /api/jobs/preview-init/:orderId is hit
+exports.getJobPreview = async (req, res) => {
+  const { orderId } = req.params;
+
+  try {
+    // 1. Fetch Order
+    const [orderRows] = await pool.query('SELECT * FROM orders WHERE id = ?', [orderId]);
+    if (orderRows.length === 0) return res.status(404).json({ success: false, message: 'Order not found' });
+    const order = orderRows[0];
+
+    // 2. Find Template (Try exact first, then fuzzy)
+    let [templates] = await pool.query(
+      'SELECT * FROM product_templates WHERE LOWER(name) = LOWER(?)',
+      [order.item_name]
+    );
+
+    if (templates.length === 0) {
+      // Fuzzy fallback
+      [templates] = await pool.query(
+        'SELECT * FROM product_templates WHERE LOWER(name) LIKE LOWER(?)',
+        [`%${order.item_name}%`]
+      );
+    }
+
+    if (templates.length === 0) {
+      return res.status(404).json({ success: false, message: `No production template found for ${order.item_name}` });
+    }
+    const template = templates[0];
+
+    // 3. Fetch Template Parts
+    const [templateParts] = await pool.query(
+      'SELECT * FROM template_parts WHERE template_id = ?',
+      [template.id]
+    );
+
+    // 4. Fetch Workers for Auto-Assignment Preview
+    const [workers] = await pool.query("SELECT name FROM users WHERE role = 'Production Staff'");
+
+    // 5. Calculate Preview Data
+    const previewParts = templateParts.map(p => ({
+      name: p.part_name,
+      requiredQty: p.qty_per_unit * order.quantity
+    }));
+
+    const previewTasks = templateParts.map((p, i) => ({
+      partName: p.part_name,
+      workerName: workers.length > 0 ? workers[i % workers.length].name : 'Unassigned',
+      deadline: order.deadline || 'Not Set'
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        orderId,
+        productName: order.item_name,
+        quantity: order.quantity,
+        parts: previewParts,
+        tasks: previewTasks
+      }
+    });
+
+  } catch (error) {
+    console.error('Error generating job preview:', error);
+    res.status(500).json({ success: false, message: 'Internal server error while generating preview' });
   }
 };

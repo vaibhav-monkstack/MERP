@@ -8,9 +8,10 @@ import React from 'react';
 const StatusBadge = ({ status }) => {
   const getColors = (s) => {
     switch (s?.toLowerCase()) {
-      case 'production':
+      case 'awaiting materials':
       case 'processing':
         return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'ready to approve':
       case 'assembly':
       case 'confirmed':
         return 'bg-purple-100 text-purple-800 border-purple-200';
@@ -21,6 +22,7 @@ const StatusBadge = ({ status }) => {
       case 'qc':
       case 'low stock':
       case 'shipped':
+      case 'pending approval':
         return 'bg-amber-100 text-amber-800 border-amber-200';
       case 'completed':
       case 'active':

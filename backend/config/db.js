@@ -61,7 +61,7 @@ const initializeTables = async () => {
         item_name        VARCHAR(200) NOT NULL,
         quantity         INT NOT NULL DEFAULT 1,
         price            DECIMAL(10,2) NOT NULL,
-        status           ENUM('new', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned') DEFAULT 'new',
+        status           ENUM('new', 'awaiting_materials', 'ready_to_approve', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned') DEFAULT 'new',
         priority         ENUM('low','medium','high','urgent') DEFAULT 'medium',
         shipping_method  VARCHAR(100),
         courier_details  VARCHAR(255),
@@ -160,15 +160,13 @@ const initializeTables = async () => {
       )
     `);
     await ensureColumnExists('suppliers', 'lead_time_days', 'lead_time_days INT DEFAULT 0');
-    await initTable('suppliers_lead_time', `
-      ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS lead_time_days INT DEFAULT 0
-    `);
 
     await initTable('requests', `
       CREATE TABLE IF NOT EXISTS requests (
         id               INT AUTO_INCREMENT PRIMARY KEY,
         request_id       VARCHAR(50) NOT NULL,
         job_id           VARCHAR(50),
+        order_id         INT,
         material         VARCHAR(255) NOT NULL,
         quantity         INT NOT NULL DEFAULT 1,
         requested_by     VARCHAR(100),
@@ -176,6 +174,7 @@ const initializeTables = async () => {
         requested_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    await ensureColumnExists('requests', 'order_id', 'order_id INT');
 
     await initTable('stock_movements', `
       CREATE TABLE IF NOT EXISTS stock_movements (
@@ -213,31 +212,142 @@ const initializeTables = async () => {
       )
     `);
 
+    // 👤 User & Security Management
+    await initTable('users', `
+      CREATE TABLE IF NOT EXISTS users (
+        id               INT AUTO_INCREMENT PRIMARY KEY,
+        name             VARCHAR(100) NOT NULL,
+        email            VARCHAR(100) NOT NULL UNIQUE,
+        password         VARCHAR(255) NOT NULL,
+        role             ENUM('Job Manager', 'Production Staff', 'Inventory Manager', 'Order Manager') NOT NULL,
+        failedAttempts   INT DEFAULT 0,
+        lockoutUntil     DATETIME DEFAULT NULL,
+        created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // 🏗️ Job Management
+    await initTable('jobs', `
+      CREATE TABLE IF NOT EXISTS jobs (
+        id               VARCHAR(50) PRIMARY KEY,
+        product          VARCHAR(255) NOT NULL,
+        quantity         INT NOT NULL,
+        team             VARCHAR(100),
+        status           VARCHAR(50) DEFAULT 'Created',
+        priority         VARCHAR(50) DEFAULT 'Medium',
+        progress         INT DEFAULT 0,
+        deadline         DATE,
+        notes            TEXT,
+        alert            VARCHAR(255),
+        orderId          INT,
+        createdAt        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updatedAt        TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (orderId) REFERENCES orders(id) ON DELETE SET NULL
+      )
+    `);
+
+    await initTable('job_parts', `
+      CREATE TABLE IF NOT EXISTS job_parts (
+        id               INT AUTO_INCREMENT PRIMARY KEY,
+        jobId            VARCHAR(50) NOT NULL,
+        name             VARCHAR(255) NOT NULL,
+        requiredQty      INT NOT NULL DEFAULT 1,
+        completedQty     INT DEFAULT 0,
+        FOREIGN KEY (jobId) REFERENCES jobs(id) ON DELETE CASCADE
+      )
+    `);
+
+    // 👥 Team Management
+    await initTable('teams', `
+      CREATE TABLE IF NOT EXISTS teams (
+        id               INT AUTO_INCREMENT PRIMARY KEY,
+        name             VARCHAR(100) NOT NULL UNIQUE,
+        created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await initTable('team_members', `
+      CREATE TABLE IF NOT EXISTS team_members (
+        id               INT AUTO_INCREMENT PRIMARY KEY,
+        teamId           INT NOT NULL,
+        userId           INT NOT NULL,
+        UNIQUE KEY team_user_unq (teamId, userId),
+        FOREIGN KEY (teamId) REFERENCES teams(id) ON DELETE CASCADE,
+        FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
+    // 📋 Task Tracking
+    await initTable('tasks', `
+      CREATE TABLE IF NOT EXISTS tasks (
+        taskId           VARCHAR(50) PRIMARY KEY,
+        jobId            VARCHAR(50) NOT NULL,
+        jobName          VARCHAR(255),
+        partName         VARCHAR(255),
+        worker           VARCHAR(100),
+        status           VARCHAR(50) DEFAULT 'Pending',
+        deadline         DATE,
+        startTime        DATETIME,
+        completedTime    DATETIME,
+        duration         VARCHAR(50) DEFAULT '-',
+        FOREIGN KEY (jobId) REFERENCES jobs(id) ON DELETE CASCADE
+      )
+    `);
+
+    await initTable('qc_records', `
+      CREATE TABLE IF NOT EXISTS qc_records (
+        id               INT AUTO_INCREMENT PRIMARY KEY,
+        jobId            VARCHAR(50) NOT NULL,
+        inspector        VARCHAR(100),
+        date             VARCHAR(50),
+        result           ENUM('Pass', 'Fail') NOT NULL,
+        passed           INT,
+        total            INT,
+        notes            TEXT,
+        FOREIGN KEY (jobId) REFERENCES jobs(id) ON DELETE CASCADE
+      )
+    `);
+
     // =======================================================
-    // SCHEDULING COLUMNS — Add new columns to tasks table
-    // Uses SHOW COLUMNS to check existence first (compatible
-    // with all MySQL versions, including < 8.0).
+    // MIGRATIONS — Ensure schema is up to date
     // =======================================================
-    const schedulingColumns = [
-      { name: 'processStep',    def: 'VARCHAR(50)  DEFAULT NULL' },
-      { name: 'sequenceOrder',  def: 'INT          DEFAULT NULL' },
-      { name: 'scheduledStart', def: 'DATE         DEFAULT NULL' },
-      { name: 'scheduledEnd',   def: 'DATE         DEFAULT NULL' },
-      { name: 'dependsOn',      def: 'VARCHAR(50)  DEFAULT NULL' },
-    ];
     try {
+      // 1. Manufacturing Sync (Status ENUM & Requests order_id)
+      const [orderCols] = await connection.query('SHOW COLUMNS FROM orders WHERE Field = "status"');
+      if (orderCols.length > 0) {
+        const type = orderCols[0].Type;
+        if (!type.includes('awaiting_materials') || !type.includes('ready_to_approve')) {
+          console.log('🔄 Updating orders.status ENUM...');
+          await connection.query(`
+            ALTER TABLE orders MODIFY COLUMN status 
+            ENUM('new', 'awaiting_materials', 'ready_to_approve', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned') 
+            DEFAULT 'new'
+          `);
+          console.log('✅ orders.status ENUM updated');
+        }
+      }
+      await ensureColumnExists('requests', 'order_id', 'order_id INT AFTER job_id');
+
+      // 2. Scheduling Columns (Process Steps & Sequence)
+      const schedulingColumns = [
+        { name: 'processStep',    def: 'VARCHAR(50)  DEFAULT NULL' },
+        { name: 'sequenceOrder',  def: 'INT          DEFAULT NULL' },
+        { name: 'scheduledStart', def: 'DATE         DEFAULT NULL' },
+        { name: 'scheduledEnd',   def: 'DATE         DEFAULT NULL' },
+        { name: 'dependsOn',      def: 'VARCHAR(50)  DEFAULT NULL' },
+      ];
       const [existingCols] = await connection.query('SHOW COLUMNS FROM tasks');
-      const colNames = existingCols.map(c => c.Field);
+      const taskColNames = existingCols.map(c => c.Field);
       for (const col of schedulingColumns) {
-        if (!colNames.includes(col.name)) {
+        if (!taskColNames.includes(col.name)) {
           await connection.query(`ALTER TABLE tasks ADD COLUMN ${col.name} ${col.def}`);
           console.log(`  ➕ Added column tasks.${col.name}`);
         }
       }
-      console.log('✅ Scheduling columns ready on tasks table');
-    } catch (e) {
-      // tasks table may not exist yet on a fresh DB — that's fine
-      console.warn('Scheduling column check skipped (tasks table not yet created):', e.message);
+      console.log('✅ All migrations complete');
+      
+    } catch (migErr) {
+      console.error('❌ Migration Error:', migErr.message);
     }
 
     connection.release();

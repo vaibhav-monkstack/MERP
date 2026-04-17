@@ -23,6 +23,14 @@ exports.login = async (req, res) => {
 
     const user = rows[0];
 
+    // == LOCKOUT CHECK ==
+    if (user.lockoutUntil && new Date(user.lockoutUntil) > new Date()) {
+      const remaining = Math.ceil((new Date(user.lockoutUntil) - new Date()) / 1000 / 60);
+      return res.status(403).json({ 
+        message: `Account is temporarily locked due to multiple failed attempts. Please try again in ${remaining} minute(s).` 
+      });
+    }
+
     // 2. Verify password (handling both hashed and legacy plain-text for transition)
     let isMatch = false;
     try {
@@ -32,20 +40,44 @@ exports.login = async (req, res) => {
       } else {
         // Fallback for legacy plain-text passwords
         isMatch = (password === user.password);
-        
-        // OPTIONAL: Automatically hash the password now for future security
-        // const hashed = await bcrypt.hash(password, 10);
-        // await pool.query('UPDATE users SET password = ? WHERE id = ?', [hashed, user.id]);
       }
     } catch (err) {
       console.error('Bcrypt comparison error:', err);
-      // If bcrypt fails (e.g. malformed hash), fallback to plain comparison just in case
       isMatch = (password === user.password);
     }
 
     if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      // == INCREMENT FAILED ATTEMPTS (fails silently if columns don't exist yet) ==
+      try {
+        const newAttempts = (user.failedAttempts || 0) + 1;
+        let lockoutUntil = null;
+        if (newAttempts >= 3) {
+          lockoutUntil = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes from now
+        }
+        await pool.query(
+          'UPDATE users SET failedAttempts = ?, lockoutUntil = ? WHERE id = ?',
+          [newAttempts, lockoutUntil, user.id]
+        );
+      } catch (lockErr) {
+        console.warn('Lockout tracking skipped (columns may not exist yet):', lockErr.message);
+      }
+
+      return res.status(401).json({ 
+        message: 'Invalid credentials',
+        attemptsRemaining: Math.max(0, 3 - ((user.failedAttempts || 0) + 1))
+      });
     }
+
+    // == SUCCESS: RESET LOCKOUT (fails silently if columns don't exist yet) ==
+    try {
+      await pool.query(
+        'UPDATE users SET failedAttempts = 0, lockoutUntil = NULL WHERE id = ?',
+        [user.id]
+      );
+    } catch (resetErr) {
+      console.warn('Lockout reset skipped (columns may not exist yet):', resetErr.message);
+    }
+
 
     // 3. Generate JWT Token
     const payload = {

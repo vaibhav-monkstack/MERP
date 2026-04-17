@@ -55,8 +55,29 @@ exports.addQCRecord = async (req, res) => {
     // Return 201 Created with the complete record data
     res.status(201).json({
       message: 'QC Record created successfully',
-      record: newRecords[0] // Return the first (and only) matching record
+      record: newRecords[0]
     });
+
+    // === AUTOMATIC REWORK HANDLING ===
+    if (record.result === 'Fail') {
+      try {
+        console.log(`QC Failed for job ${record.jobId}. Resetting tasks to Pending...`);
+        
+        // 1. Reset all production tasks to 'Pending'
+        await pool.query(
+          "UPDATE tasks SET status = 'Pending', startTime = NULL, completedTime = NULL, duration = '-' WHERE jobId = ?",
+          [record.jobId]
+        );
+
+        // 2. Ensure job status is 'Rework' (though frontend usually sends this, backend ensures it)
+        await pool.query(
+          "UPDATE jobs SET status = 'Rework' WHERE id = ?",
+          [record.jobId]
+        );
+      } catch (err) {
+        console.error('Error during automatic rework reset:', err);
+      }
+    }
   } catch (error) {
     console.error('Error creating QC record:', error);
     res.status(500).json({ message: 'Error creating QC record' });
