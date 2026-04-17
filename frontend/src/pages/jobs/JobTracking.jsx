@@ -69,6 +69,15 @@ const JobTracking = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isClearing, setIsClearing]     = useState(false);
 
+  // Assembly state
+  const [assemblyChecks, setAssemblyChecks] = useState({
+    partsVerified: false,
+    hardwareSecure: false,
+    safetyCheck: false,
+    cosmeticInspection: false
+  });
+  const [completingAssembly, setCompletingAssembly] = useState(false);
+
   if (!job) return <div style={{ padding: '40px' }}>Job not found.</div>;
 
   const stages = ['Created', 'Materials Ready', 'Production', 'Assembly', 'Quality Check', 'Completed'];
@@ -144,6 +153,18 @@ const JobTracking = () => {
       await updateJob(job.id, { status: newStage, progress: stageProgress[newStage] ?? job.progress });
     } catch (error) {
       console.error('Failed to update stage:', error);
+    }
+  };
+
+  const handleAssemblyComplete = async () => {
+    setCompletingAssembly(true);
+    try {
+      await updateJob(id, { status: 'Quality Check', progress: 90 });
+      // Reload or update local if needed, JobContext should handle it
+    } catch (err) {
+      console.error('Assembly completion failed:', err);
+    } finally {
+      setCompletingAssembly(false);
     }
   };
 
@@ -354,6 +375,50 @@ const JobTracking = () => {
                 </div>
               </div>
             </div>
+
+            {/* Final Assembly Card — Only visible during Assembly stage */}
+            {job.status === 'Assembly' && (
+              <div style={{ ...styles.card, border: '2px solid #6366f1', position: 'relative', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', backgroundColor: '#6366f1' }}></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+                  <div>
+                    <h2 style={styles.cardTitle}>Final Assembly Workflow</h2>
+                    <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>Verify all parts are correctly assembled before moving to QC.</p>
+                  </div>
+                  <Package size={24} color="#6366f1" />
+                </div>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+                  {Object.keys(assemblyChecks).map(key => (
+                    <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', padding: '12px', borderRadius: '8px', backgroundColor: '#f9fafb' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={assemblyChecks[key]} 
+                        onChange={() => setAssemblyChecks(prev => ({ ...prev, [key]: !prev[key] }))}
+                        style={{ width: '18px', height: '18px', accentColor: '#6366f1' }}
+                      />
+                      <span style={{ fontSize: '14px', fontWeight: '500', color: '#374151', textTransform: 'capitalize' }}>
+                        {key.replace(/([A-Z])/g, ' $1')}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <button
+                    style={{ 
+                      ...styles.solidGreenBtn, 
+                      backgroundColor: Object.values(assemblyChecks).every(v => v) ? '#6366f1' : '#e5e7eb',
+                      cursor: Object.values(assemblyChecks).every(v => v) ? 'pointer' : 'not-allowed'
+                    }}
+                    disabled={!Object.values(assemblyChecks).every(v => v) || completingAssembly}
+                    onClick={handleAssemblyComplete}
+                  >
+                    {completingAssembly ? 'Processing...' : 'Complete Assembly & Move to QC'}
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Parts Progress Card */}
             <div style={styles.card}>

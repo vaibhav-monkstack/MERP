@@ -175,6 +175,23 @@ exports.updateTask = async (req, res) => {
     if (updates.length > 0) {
       values.push(id); // Add the task ID for the WHERE clause
       await pool.query(`UPDATE tasks SET ${updates.join(', ')} WHERE taskId = ?`, values);
+      
+      // === AUTO-ASSEMBLY LOGIC ===
+      if (status === 'Completed') {
+        const [remainingTasks] = await pool.query(
+          "SELECT COUNT(*) as cnt FROM tasks WHERE jobId = ? AND status != 'Completed' AND processStep IS NOT NULL",
+          [task.jobId]
+        );
+        
+        if (remainingTasks[0].cnt === 0) {
+          // All production tasks done -> Move job to Assembly status
+          await pool.query(
+            "UPDATE jobs SET status = 'Assembly', progress = 60 WHERE id = ?",
+            [task.jobId]
+          );
+          console.log(`Job ${task.jobId} auto-moved to 'Assembly' stage`);
+        }
+      }
     }
 
     // Fetch the updated task from the database to return it

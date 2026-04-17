@@ -213,41 +213,44 @@ const initializeTables = async () => {
     // 👤 User & Security Management
     await initTable('users', `
       CREATE TABLE IF NOT EXISTS users (
-        id       INT AUTO_INCREMENT PRIMARY KEY,
-        name     VARCHAR(255) NOT NULL,
-        email    VARCHAR(255) NOT NULL UNIQUE,
-        password VARCHAR(255) NOT NULL,
-        role     ENUM('Job Manager', 'Production Staff', 'Inventory Manager', 'Order Manager') NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        id               INT AUTO_INCREMENT PRIMARY KEY,
+        name             VARCHAR(100) NOT NULL,
+        email            VARCHAR(100) NOT NULL UNIQUE,
+        password         VARCHAR(255) NOT NULL,
+        role             ENUM('Job Manager', 'Production Staff', 'Inventory Manager', 'Order Manager') NOT NULL,
+        failedAttempts   INT DEFAULT 0,
+        lockoutUntil     DATETIME DEFAULT NULL,
+        created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
     // 🏗️ Job Management
     await initTable('jobs', `
       CREATE TABLE IF NOT EXISTS jobs (
-        id       VARCHAR(50) PRIMARY KEY,
-        product  VARCHAR(255) NOT NULL,
-        quantity INT NOT NULL DEFAULT 1,
-        team     VARCHAR(100),
-        status   VARCHAR(50) DEFAULT 'Created',
-        priority VARCHAR(50) DEFAULT 'Medium',
-        progress INT DEFAULT 0,
-        deadline DATE,
-        notes    TEXT,
-        alert    VARCHAR(255),
-        orderId  INT,
-        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        id               VARCHAR(50) PRIMARY KEY,
+        product          VARCHAR(255) NOT NULL,
+        quantity         INT NOT NULL,
+        team             VARCHAR(100),
+        status           VARCHAR(50) DEFAULT 'Created',
+        priority         VARCHAR(50) DEFAULT 'Medium',
+        progress         INT DEFAULT 0,
+        deadline         DATE,
+        notes            TEXT,
+        alert            VARCHAR(255),
+        orderId          INT,
+        createdAt        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updatedAt        TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (orderId) REFERENCES orders(id) ON DELETE SET NULL
       )
     `);
 
     await initTable('job_parts', `
       CREATE TABLE IF NOT EXISTS job_parts (
-        id          INT AUTO_INCREMENT PRIMARY KEY,
-        jobId       VARCHAR(50) NOT NULL,
-        name        VARCHAR(255) NOT NULL,
-        requiredQty INT NOT NULL DEFAULT 1,
+        id               INT AUTO_INCREMENT PRIMARY KEY,
+        jobId            VARCHAR(50) NOT NULL,
+        name             VARCHAR(255) NOT NULL,
+        requiredQty      INT NOT NULL DEFAULT 1,
+        completedQty     INT DEFAULT 0,
         FOREIGN KEY (jobId) REFERENCES jobs(id) ON DELETE CASCADE
       )
     `);
@@ -255,16 +258,17 @@ const initializeTables = async () => {
     // 👥 Team Management
     await initTable('teams', `
       CREATE TABLE IF NOT EXISTS teams (
-        id   INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(255) NOT NULL UNIQUE
+        id               INT AUTO_INCREMENT PRIMARY KEY,
+        name             VARCHAR(100) NOT NULL UNIQUE,
+        created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
     await initTable('team_members', `
       CREATE TABLE IF NOT EXISTS team_members (
-        id      INT AUTO_INCREMENT PRIMARY KEY,
-        teamId  INT NOT NULL,
-        userId  INT NOT NULL,
+        id               INT AUTO_INCREMENT PRIMARY KEY,
+        teamId           INT NOT NULL,
+        userId           INT NOT NULL,
         UNIQUE KEY team_user_unq (teamId, userId),
         FOREIGN KEY (teamId) REFERENCES teams(id) ON DELETE CASCADE,
         FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
@@ -274,16 +278,30 @@ const initializeTables = async () => {
     // 📋 Task Tracking
     await initTable('tasks', `
       CREATE TABLE IF NOT EXISTS tasks (
-        taskId        VARCHAR(50) PRIMARY KEY,
-        jobId         VARCHAR(50) NOT NULL,
-        jobName       VARCHAR(255),
-        partName      VARCHAR(255) NOT NULL,
-        worker        VARCHAR(255),
-        status        VARCHAR(50) DEFAULT 'Pending',
-        deadline      DATE,
-        startTime     DATETIME,
-        completedTime DATETIME,
-        duration      VARCHAR(50) DEFAULT '-',
+        taskId           VARCHAR(50) PRIMARY KEY,
+        jobId            VARCHAR(50) NOT NULL,
+        jobName          VARCHAR(255),
+        partName         VARCHAR(255),
+        worker           VARCHAR(100),
+        status           VARCHAR(50) DEFAULT 'Pending',
+        deadline         DATE,
+        startTime        DATETIME,
+        completedTime    DATETIME,
+        duration         VARCHAR(50) DEFAULT '-',
+        FOREIGN KEY (jobId) REFERENCES jobs(id) ON DELETE CASCADE
+      )
+    `);
+
+    await initTable('qc_records', `
+      CREATE TABLE IF NOT EXISTS qc_records (
+        id               INT AUTO_INCREMENT PRIMARY KEY,
+        jobId            VARCHAR(50) NOT NULL,
+        inspector        VARCHAR(100),
+        date             VARCHAR(50),
+        result           ENUM('Pass', 'Fail') NOT NULL,
+        passed           INT,
+        total            INT,
+        notes            TEXT,
         FOREIGN KEY (jobId) REFERENCES jobs(id) ON DELETE CASCADE
       )
     `);
