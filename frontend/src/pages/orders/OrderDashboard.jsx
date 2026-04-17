@@ -8,7 +8,10 @@ import StatusBadge from '../../components/common/StatusBadge';
 import DataTable from '../../components/common/DataTable';
 import { ORDER_STATUS, PRIORITY } from '../../utils/constants';
 
-const STATUS_LIST = Object.values(ORDER_STATUS);
+const STATUS_LIST = Object.entries(ORDER_STATUS).map(([key, value]) => ({
+  label: value.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+  value: value
+}));
 
 export default function Orders() {
   const navigate                        = useNavigate();
@@ -121,7 +124,7 @@ export default function Orders() {
               onChange={e => setFilterStatus(e.target.value)}
             >
               <option value="all">All Status</option>
-              {STATUS_LIST.map(s => <option key={s} value={s}>{s}</option>)}
+              {STATUS_LIST.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
             </select>
             <button 
               onClick={() => navigate('/orders/new')}
@@ -143,16 +146,19 @@ export default function Orders() {
                 <div className="text-[11px] text-gray-400 font-medium tracking-tighter">ORD-{String(o.id).padStart(3, '0')} • {new Date(o.created_at).toLocaleDateString()}</div>
               </td>
               <td className="px-6 py-5">
-                <div className="text-sm font-bold text-gray-800">{o.linked_customer_name || o.customer_name || 'Walk-in'}</div>
-                <div className="text-[10px] text-gray-400 font-medium">{o.linked_customer_email || 'No email'}</div>
+                <div className="text-sm font-bold text-gray-800">{o.customer_name || 'Walk-in'}</div>
+                <div className="text-[10px] text-gray-400 font-medium">{o.email || 'No email'}</div>
               </td>
               <td className="px-6 py-5">
                 <select 
-                  value={o.status?.charAt(0).toUpperCase() + o.status?.slice(1)} 
+                  value={o.status} 
                   onChange={e => handleStatusChange(o.id, e.target.value)}
-                  className="bg-transparent border-none text-xs font-bold cursor-pointer focus:outline-none hover:text-indigo-600 transition-colors capitalize"
+                  className={`bg-transparent border-none text-[11px] font-black cursor-pointer focus:outline-none hover:text-indigo-600 transition-colors uppercase tracking-tight ${
+                    o.status === 'ready_to_approve' ? 'text-emerald-500' : 
+                    o.status === 'awaiting_materials' ? 'text-orange-500' : 'text-gray-600'
+                  }`}
                 >
-                  {STATUS_LIST.map(s => <option key={s} value={s}>{s}</option>)}
+                  {STATUS_LIST.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
                 </select>
               </td>
               <td className="px-6 py-5">
@@ -160,7 +166,25 @@ export default function Orders() {
               </td>
               <td className="px-6 py-5 text-right font-black text-gray-900">₹{(o.price * o.quantity).toLocaleString('en-IN')}</td>
               <td className="px-6 py-5 text-right">
-                <div className="flex gap-2 justify-end">
+                <div className="flex gap-2 justify-end items-center">
+                  {/* Approval Gate Actions */}
+                  {o.status === 'new' && (
+                    <button 
+                      onClick={() => handleStatusChange(o.id, 'awaiting_materials')}
+                      className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-bold uppercase hover:bg-indigo-600 hover:text-white transition-all border border-indigo-100"
+                    >
+                      Verify Stock
+                    </button>
+                  )}
+                  {o.status === 'ready_to_approve' && (
+                    <button 
+                      onClick={() => handleStatusChange(o.id, 'confirmed')}
+                      className="px-3 py-1.5 bg-green-50 text-green-700 rounded-lg text-[10px] font-bold uppercase hover:bg-green-600 hover:text-white transition-all border border-green-100 flex items-center gap-1 shadow-sm"
+                    >
+                      <Zap size={10} /> Approve Production
+                    </button>
+                  )}
+
                   <button onClick={() => openEdit(o)} className="p-2 rounded-lg border border-gray-100 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all shadow-sm">
                     <Edit2 size={16} />
                   </button>

@@ -14,32 +14,39 @@ exports.getTasks = async (req, res) => {
   // Extract optional filter parameters from the query string
   const { jobId, worker } = req.query;
   try {
-    // Start building the SQL query dynamically based on which filters are provided
-    let query = 'SELECT * FROM tasks';  // Base query — fetch all tasks
-    let params = [];                     // Array of parameter values for prepared statement
-    let conditions = [];                 // Array of WHERE conditions
+    // START BUILDING QUERY
+    // JOIN with jobs table to ensure we only show tasks for jobs that are actually in production
+    // (i.e., not 'Pending Approval')
+    let query = `
+      SELECT t.* 
+      FROM tasks t
+      JOIN jobs j ON t.jobId = j.id
+      WHERE j.status != 'Pending Approval'
+    `;
+    let params = [];
+    let conditions = [];
 
-    // If a jobId filter was provided, add it to the conditions
+    // Filter by jobId
     if (jobId) {
-      conditions.push('jobId = ?');  // Filter tasks for this specific job
+      conditions.push('t.jobId = ?');
       params.push(jobId);
     }
 
-    // If a worker name filter was provided, add it to the conditions
+    // Filter by worker name
     if (worker) {
-      conditions.push('worker = ?'); // Filter tasks assigned to this specific worker
+      conditions.push('t.worker = ?');
       params.push(worker);
     }
 
-    // If any conditions were added, append them as a WHERE clause
+    // Append conditions
     if (conditions.length > 0) {
-      query += ' WHERE ' + conditions.join(' AND '); // Combine conditions with AND
+      query += ' AND ' + conditions.join(' AND ');
     }
 
-    // Sort results by task ID in ascending order
-    query += ' ORDER BY taskId ASC';
+    // Sort by task ID
+    query += ' ORDER BY t.taskId ASC';
 
-    // Execute the query with the filter parameters
+    // Execute the query
     const [tasks] = await pool.query(query, params);
     
     // Format the startTime field for display before sending to the frontend

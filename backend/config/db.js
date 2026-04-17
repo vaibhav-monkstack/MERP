@@ -61,7 +61,7 @@ const initializeTables = async () => {
         item_name        VARCHAR(200) NOT NULL,
         quantity         INT NOT NULL DEFAULT 1,
         price            DECIMAL(10,2) NOT NULL,
-        status           ENUM('new', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned') DEFAULT 'new',
+        status           ENUM('new', 'awaiting_materials', 'ready_to_approve', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned') DEFAULT 'new',
         priority         ENUM('low','medium','high','urgent') DEFAULT 'medium',
         shipping_method  VARCHAR(100),
         courier_details  VARCHAR(255),
@@ -166,6 +166,7 @@ const initializeTables = async () => {
         id               INT AUTO_INCREMENT PRIMARY KEY,
         request_id       VARCHAR(50) NOT NULL,
         job_id           VARCHAR(50),
+        order_id         INT,
         material         VARCHAR(255) NOT NULL,
         quantity         INT NOT NULL DEFAULT 1,
         requested_by     VARCHAR(100),
@@ -173,6 +174,7 @@ const initializeTables = async () => {
         requested_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    await ensureColumnExists('requests', 'order_id', 'order_id INT');
 
     await initTable('stock_movements', `
       CREATE TABLE IF NOT EXISTS stock_movements (
@@ -307,30 +309,45 @@ const initializeTables = async () => {
     `);
 
     // =======================================================
-    // SCHEDULING COLUMNS — Add new columns to tasks table
-    // Uses SHOW COLUMNS to check existence first (compatible
-    // with all MySQL versions, including < 8.0).
+    // MIGRATIONS — Ensure schema is up to date
     // =======================================================
-    const schedulingColumns = [
-      { name: 'processStep',    def: 'VARCHAR(50)  DEFAULT NULL' },
-      { name: 'sequenceOrder',  def: 'INT          DEFAULT NULL' },
-      { name: 'scheduledStart', def: 'DATE         DEFAULT NULL' },
-      { name: 'scheduledEnd',   def: 'DATE         DEFAULT NULL' },
-      { name: 'dependsOn',      def: 'VARCHAR(50)  DEFAULT NULL' },
-    ];
     try {
+      // 1. Manufacturing Sync (Status ENUM & Requests order_id)
+      const [orderCols] = await connection.query('SHOW COLUMNS FROM orders WHERE Field = "status"');
+      if (orderCols.length > 0) {
+        const type = orderCols[0].Type;
+        if (!type.includes('awaiting_materials') || !type.includes('ready_to_approve')) {
+          console.log('🔄 Updating orders.status ENUM...');
+          await connection.query(`
+            ALTER TABLE orders MODIFY COLUMN status 
+            ENUM('new', 'awaiting_materials', 'ready_to_approve', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned') 
+            DEFAULT 'new'
+          `);
+          console.log('✅ orders.status ENUM updated');
+        }
+      }
+      await ensureColumnExists('requests', 'order_id', 'order_id INT AFTER job_id');
+
+      // 2. Scheduling Columns (Process Steps & Sequence)
+      const schedulingColumns = [
+        { name: 'processStep',    def: 'VARCHAR(50)  DEFAULT NULL' },
+        { name: 'sequenceOrder',  def: 'INT          DEFAULT NULL' },
+        { name: 'scheduledStart', def: 'DATE         DEFAULT NULL' },
+        { name: 'scheduledEnd',   def: 'DATE         DEFAULT NULL' },
+        { name: 'dependsOn',      def: 'VARCHAR(50)  DEFAULT NULL' },
+      ];
       const [existingCols] = await connection.query('SHOW COLUMNS FROM tasks');
-      const colNames = existingCols.map(c => c.Field);
+      const taskColNames = existingCols.map(c => c.Field);
       for (const col of schedulingColumns) {
-        if (!colNames.includes(col.name)) {
+        if (!taskColNames.includes(col.name)) {
           await connection.query(`ALTER TABLE tasks ADD COLUMN ${col.name} ${col.def}`);
           console.log(`  ➕ Added column tasks.${col.name}`);
         }
       }
-      console.log('✅ Scheduling columns ready on tasks table');
-    } catch (e) {
-      // tasks table may not exist yet on a fresh DB — that's fine
-      console.warn('Scheduling column check skipped (tasks table not yet created):', e.message);
+      console.log('✅ All migrations complete');
+      
+    } catch (migErr) {
+      console.error('❌ Migration Error:', migErr.message);
     }
 
     connection.release();

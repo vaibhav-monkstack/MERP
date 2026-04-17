@@ -95,8 +95,8 @@ export default function Requests() {
 
   const tableHeaders = [
     { key: 'checkbox', label: '', sortable: false },
-    { key: 'request_id', label: 'Request ID', sortable: false },
-    { key: 'job_id', label: 'Job ID', sortable: false },
+    { key: 'request_id', label: 'ID', sortable: false },
+    { key: 'source', label: 'Reference', sortable: false },
     { key: 'material', label: 'Material', sortable: false },
     { key: 'quantity', label: 'Qty', sortable: false },
     { key: 'requested_by', label: 'Requested By', sortable: false },
@@ -224,7 +224,15 @@ export default function Requests() {
                     />
                   </td>
                   <td className="px-6 py-5 text-xs font-black text-slate-400 font-mono">{r.request_id}</td>
-                  <td className="px-6 py-5 text-xs font-black text-slate-400 font-mono">{r.job_id}</td>
+                  <td className="px-6 py-5">
+                    {r.order_id ? (
+                      <span className="px-2 py-1 bg-indigo-50 text-indigo-600 rounded-md text-[10px] font-black uppercase">Order #{r.order_id}</span>
+                    ) : r.job_id ? (
+                      <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-md text-[10px] font-black uppercase">Job {r.job_id.split('-').pop()}</span>
+                    ) : (
+                      <span className="text-slate-300 text-[10px] font-bold italic tracking-widest">NO REF</span>
+                    )}
+                  </td>
                   <td className="px-6 py-5 text-sm font-bold text-slate-900">{r.material}</td>
                   <td className="px-6 py-5 text-sm font-bold text-slate-600">{r.quantity}</td>
                   <td className="px-6 py-5 text-sm font-medium text-slate-500">{r.requested_by}</td>

@@ -21,6 +21,10 @@ import {
   Package,       // Product icon
   Hash,          // Quantity icon
   Calendar,      // Deadline icon
+  ChevronDown,   // Expand icon
+  ChevronUp,     // Collapse icon
+  Truck,         // Materials icon
+  Users,         // Assignments icon
 } from 'lucide-react';
 
 // Shared Components
@@ -34,7 +38,10 @@ import toast from 'react-hot-toast';
 
 const ManagerDashboard = () => {
   // Get jobs data and operations from the shared context
-  const { jobs, deleteJob, loading, approveJob } = useJobs();
+  const { 
+    jobs, deleteJob, loading, approveJob, 
+    pendingOrders, createJobFromOrder, getJobPreview 
+  } = useJobs();
   // Local state for the filtered/searched list of jobs shown in the table
   const [filteredJobs, setFilteredJobs] = useState([]);
   // Search input text
@@ -43,6 +50,11 @@ const ManagerDashboard = () => {
   const [statusFilter, setStatusFilter] = useState('All Status');
   // Dropdown filter for job priority
   const [priorityFilter, setPriorityFilter] = useState('All Priorities');
+  
+  // State for expanded orders in the "Incoming" section
+  const [expandedOrder, setExpandedOrder] = useState(null);
+  const [previews, setPreviews] = useState({});
+  const [previewLoading, setPreviewLoading] = useState(false);
   
   // Separate jobs pending approval
   const jobsPendingApproval = jobs.filter(j => j.status === 'Pending Approval');
@@ -70,6 +82,29 @@ const ManagerDashboard = () => {
         toast.success('Job deleted successfully');
       } catch (error) {
         toast.error('Failed to delete job');
+      }
+    }
+  };
+
+  // Handle toggling the preview expansion and fetching details
+  const toggleOrderPreview = async (orderId) => {
+    if (expandedOrder === orderId) {
+      setExpandedOrder(null);
+      return;
+    }
+    
+    setExpandedOrder(orderId);
+    
+    if (!previews[orderId]) {
+      try {
+        setPreviewLoading(true);
+        const data = await getJobPreview(orderId);
+        setPreviews(prev => ({ ...prev, [orderId]: data }));
+      } catch (err) {
+        console.error("Preview failed:", err);
+        setPreviews(prev => ({ ...prev, [orderId]: { error: err.response?.data?.message || 'Failed to load details' } }));
+      } finally {
+        setPreviewLoading(false);
       }
     }
   };
@@ -187,6 +222,197 @@ const ManagerDashboard = () => {
           />
         </div>
 
+        {/* INCOMING PRODUCTION ORDERS (MANUAL INITIALIZATION) */}
+        {pendingOrders.length > 0 && (
+          <div className="mb-10 animate-in fade-in slide-in-from-top-4 duration-700">
+            <div className="flex items-center gap-2 mb-4 px-2">
+              <div className="bg-indigo-100 p-1.5 rounded-lg flex items-center justify-center">
+                <ShoppingCart size={18} className="text-indigo-600" />
+              </div>
+              <h2 className="text-lg font-black text-slate-800 tracking-tight uppercase">Incoming Production Orders</h2>
+              <div className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-100 px-3 py-1 rounded-full">
+                <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></div>
+                <span className="text-indigo-700 text-[10px] font-black uppercase tracking-widest leading-none">
+                  {pendingOrders.length} Ready to Initialize
+                </span>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-[32px] shadow-sm border border-slate-100 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse min-w-[1000px]">
+                  <thead>
+                    <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-black uppercase tracking-widest border-b border-slate-100">
+                      <th className="px-8 py-5">Order Context</th>
+                      <th className="px-8 py-5">Customer Profile</th>
+                      <th className="px-8 py-5">System Plan</th>
+                      <th className="px-8 py-5 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {pendingOrders.map((order) => (
+                      <React.Fragment key={order.orderId}>
+                        <tr className={`group transition-all duration-300 ${expandedOrder === order.orderId ? 'bg-indigo-50/30' : 'hover:bg-slate-50/50'}`}>
+                          <td className="px-8 py-6">
+                            <div className="flex items-center gap-4">
+                              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 ${expandedOrder === order.orderId ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'bg-slate-900 text-white'}`}>
+                                <Package size={22} strokeWidth={2.5} />
+                              </div>
+                              <div>
+                                <div className="text-[10px] font-black text-slate-400 uppercase tracking-tighter mb-0.5 flex items-center gap-1.5">
+                                  <span>Order #{order.orderId}</span>
+                                  <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                                  <span>{new Date(order.created_at).toLocaleDateString()}</span>
+                                </div>
+                                <div className="text-base font-black text-slate-900 uppercase leading-tight tracking-tight">{order.item_name}</div>
+                                <div className="text-[10px] font-bold text-slate-500 mt-1.5 flex items-center gap-2">
+                                  <span className="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md text-slate-600 uppercase">Qty: {order.quantity}</span>
+                                  <span className={`px-2 py-0.5 rounded-md border text-[9px] uppercase font-black tracking-widest ${
+                                    order.priority === 'Urgent' ? 'bg-rose-50 border-rose-100 text-rose-600' : 
+                                    order.priority === 'High' ? 'bg-amber-50 border-amber-100 text-amber-600' : 
+                                    'bg-slate-100 border-slate-200 text-slate-500'
+                                  }`}>{order.priority}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-8 py-6">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-400 group-hover:border-indigo-200 group-hover:text-indigo-600 transition-colors shadow-sm">
+                                <User size={16} />
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-sm font-black text-slate-800 uppercase tracking-tight leading-none mb-1">{order.customer_name}</span>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Authorized Production</span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-8 py-6">
+                            <button 
+                              onClick={() => toggleOrderPreview(order.orderId)}
+                              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                                expandedOrder === order.orderId 
+                                ? 'bg-indigo-100 text-indigo-700 border border-indigo-200' 
+                                : 'bg-white text-slate-600 border border-slate-200 hover:border-indigo-300 hover:text-indigo-600 shadow-sm'
+                              }`}
+                            >
+                              {expandedOrder === order.orderId ? <ChevronUp size={14} strokeWidth={3} /> : <ChevronDown size={14} strokeWidth={3} />}
+                              <span>{expandedOrder === order.orderId ? 'Hide Plan' : 'Preview Plan'}</span>
+                            </button>
+                          </td>
+                          <td className="px-8 py-6 text-right">
+                            <button 
+                              onClick={() => createJobFromOrder(order.orderId)}
+                              className="bg-indigo-600 text-white px-7 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-indigo-700 hover:scale-[1.05] active:scale-[0.95] transition-all shadow-xl shadow-indigo-100 flex items-center gap-2 ml-auto"
+                            >
+                              <Plus size={16} strokeWidth={3} />
+                              <span>Initialize Job</span>
+                            </button>
+                          </td>
+                        </tr>
+
+                        {/* EXPANDED PREVIEW CONTENT */}
+                        {expandedOrder === order.orderId && (
+                          <tr>
+                            <td colSpan="4" className="bg-indigo-50/20 px-12 py-8 border-b border-indigo-100/50">
+                              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 animate-in fade-in slide-in-from-top-2 duration-500">
+                                
+                                {/* MATERIALS PREVIEW */}
+                                <div>
+                                  <div className="flex items-center gap-2 mb-4">
+                                    <div className="bg-white p-1.5 rounded-lg border border-indigo-100 text-indigo-600 shadow-sm">
+                                      <Truck size={14} />
+                                    </div>
+                                    <h4 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Material Requirements</h4>
+                                  </div>
+                                  
+                                  {previewLoading ? (
+                                    <div className="flex items-center gap-3 py-4 text-slate-400 italic text-xs">
+                                      <div className="w-3 h-3 border-2 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></div>
+                                      Calculating inventory needs...
+                                    </div>
+                                  ) : previews[order.orderId] ? (
+                                    <div className="bg-white rounded-2xl border border-indigo-100 shadow-sm overflow-hidden">
+                                      <table className="w-full text-left text-xs uppercase font-bold">
+                                        <thead className="bg-slate-50 text-slate-400 text-[9px] tracking-tighter">
+                                          <tr>
+                                            <th className="px-4 py-2.5">Component</th>
+                                            <th className="px-4 py-2.5 text-right">Required Qty</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-50 text-slate-700">
+                                          {previews[order.orderId].parts.map((part, idx) => (
+                                            <tr key={idx}>
+                                              <td className="px-4 py-3">{part.name}</td>
+                                              <td className="px-4 py-3 text-right text-indigo-600 font-black">{part.requiredQty}</td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  ) : previews[order.orderId] && previews[order.orderId].error ? (
+                                    <div className="flex items-center gap-2 p-4 bg-rose-50 border border-rose-100 rounded-2xl text-[10px] font-bold text-rose-600 uppercase">
+                                      <AlertCircle size={14} />
+                                      <span>{previews[order.orderId].error}</span>
+                                    </div>
+                                  ) : <div className="text-xs text-rose-500">Failed to load preview</div>}
+                                </div>
+
+                                {/* ASSIGNMENT PREVIEW */}
+                                <div>
+                                  <div className="flex items-center gap-2 mb-4">
+                                    <div className="bg-white p-1.5 rounded-lg border border-indigo-100 text-indigo-600 shadow-sm">
+                                      <Users size={14} />
+                                    </div>
+                                    <h4 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Task Assignment Plan</h4>
+                                  </div>
+                                  
+                                  {previewLoading ? (
+                                    <div className="flex items-center gap-3 py-4 text-slate-400 italic text-xs">
+                                      <div className="w-3 h-3 border-2 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></div>
+                                      Assigning production team...
+                                    </div>
+                                  ) : previews[order.orderId] ? (
+                                    <div className="space-y-2">
+                                      {previews[order.orderId].tasks.map((task, idx) => (
+                                        <div key={idx} className="bg-white border border-slate-100 rounded-xl p-3 flex justify-between items-center hover:border-indigo-200 transition-colors shadow-sm">
+                                          <div className="flex flex-col gap-0.5">
+                                            <span className="text-[10px] font-black text-slate-900 uppercase mb-0.5">{task.partName}</span>
+                                            <span className="text-[9px] text-slate-400 flex items-center gap-1 font-bold">
+                                              <Calendar size={10} />
+                                              Deadline: {task.deadline}
+                                            </span>
+                                          </div>
+                                          <div className="bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-lg flex items-center gap-2">
+                                            <div className="w-5 h-5 bg-indigo-600 text-white rounded flex items-center justify-center text-[9px] font-bold">
+                                              {task.workerName.charAt(0)}
+                                            </div>
+                                            <span className="text-[10px] font-black text-slate-700 uppercase tracking-tight">{task.workerName}</span>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : previews[order.orderId] && previews[order.orderId].error ? (
+                                    <div className="flex items-center gap-2 p-4 bg-rose-50 border border-rose-100 rounded-2xl text-[10px] font-bold text-rose-600 uppercase">
+                                      <AlertCircle size={14} />
+                                      <span>Template Missing</span>
+                                    </div>
+                                  ) : <div className="text-xs text-rose-500">Failed to load assignment pre-plan</div>}
+                                </div>
+
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* JOBS PENDING APPROVAL SECTION */}
         {jobsPendingApproval.length > 0 && (
           <div className="mb-10 animate-in fade-in slide-in-from-top-4 duration-700">
@@ -252,7 +478,7 @@ const ManagerDashboard = () => {
                         <span className="text-sm font-bold text-slate-700">{job.quantity} Units</span>
                       </div>
 
-                      <div className="flex flex-col gap-1 col-span-2 bg-slate-50 p-3 rounded-2xl border border-dashed border-slate-200 group-hover:border-amber-200 group-hover:bg-amber-50/30 transition-colors">
+                      <div className="flex flex-col gap-1 bg-slate-50 p-3 rounded-2xl border border-dashed border-slate-200 group-hover:border-amber-200 group-hover:bg-amber-50/30 transition-colors">
                         <div className="flex items-center gap-1.5 text-slate-400 group-hover:text-amber-600">
                           <Calendar size={12} />
                           <span className="text-[10px] font-bold uppercase tracking-wider">Deadline</span>
@@ -260,6 +486,44 @@ const ManagerDashboard = () => {
                         <span className="text-sm font-black text-slate-900">
                           {job.deadline ? new Date(job.deadline).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Not Set'}
                         </span>
+                      </div>
+                    </div>
+
+                    {/* JOB PLAN DETAILS (PARTS & TASKS) */}
+                    <div className="mb-8 space-y-4">
+                      {/* Materials Preview Mini */}
+                      <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Truck size={12} className="text-indigo-600" strokeWidth={3} />
+                          <span className="text-[10px] font-black uppercase text-slate-700 tracking-wider">Material Forecast</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          {job.parts && job.parts.map((p, idx) => (
+                            <div key={idx} className="flex justify-between items-center text-[10px] bg-white px-2 py-1.5 rounded-lg border border-slate-100 shadow-sm">
+                              <span className="text-slate-500 font-bold truncate pr-1">{p.name}</span>
+                              <span className="text-indigo-600 font-black">{p.requiredQty}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Tasks Preview Mini */}
+                      <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Users size={12} className="text-indigo-600" strokeWidth={3} />
+                          <span className="text-[10px] font-black uppercase text-slate-700 tracking-wider">Worker Assignment Plan</span>
+                        </div>
+                        <div className="space-y-2">
+                          {job.tasks && job.tasks.map((t, idx) => (
+                            <div key={idx} className="flex justify-between items-center bg-white px-2.5 py-2 rounded-xl border border-slate-100 shadow-sm">
+                              <span className="text-[10px] font-black text-slate-900 truncate pr-2 uppercase">{t.partName}</span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[9px] font-bold text-slate-400 uppercase">{t.worker}</span>
+                                <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
 

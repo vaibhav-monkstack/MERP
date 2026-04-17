@@ -27,12 +27,14 @@ export const PRIORITY = {
 };
 
 export const ORDER_STATUS = {
-  NEW: 'New',
-  CONFIRMED: 'Confirmed',
-  PROCESSING: 'Processing',
-  SHIPPED: 'Shipped',
-  DELIVERED: 'Delivered',
-  CANCELLED: 'Cancelled',
+  NEW: 'new',
+  AWAITING_MATERIALS: 'awaiting_materials',
+  READY_TO_APPROVE: 'ready_to_approve',
+  CONFIRMED: 'confirmed',
+  PROCESSING: 'processing',
+  SHIPPED: 'shipped',
+  DELIVERED: 'delivered',
+  CANCELLED: 'cancelled',
 };
 
 export const INVENTORY_STATUS = {
