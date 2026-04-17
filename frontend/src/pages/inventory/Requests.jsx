@@ -49,8 +49,15 @@ export default function Requests() {
   const update = async (id, status) => {
     try {
       const res = await API.put(`/requests/${id}`, { status });
+      
+      // ✅ Check for validation errors from backend
+      if (!res.data.success && res.data.error) {
+        toast.error(res.data.error);
+        return;
+      }
+      
       if (status === 'Approved') {
-        toast.success(res.data.message || 'Request approved');
+        toast.success(res.data.message || 'Request approved successfully');
       } else if (status === 'Rejected') {
         toast.error(res.data.message || 'Request rejected');
       } else {
@@ -58,7 +65,10 @@ export default function Requests() {
       }
       fetchData();
     } catch (err) {
-      toast.error('Failed to update request');
+      // ✅ Show backend error message if available
+      const errorMsg = err.response?.data?.error || err.response?.data?.message || 'Failed to update request';
+      toast.error(errorMsg);
+      console.error('Update error:', err);
     }
   };
 
@@ -66,17 +76,24 @@ export default function Requests() {
   const bulkUpdate = async (status) => {
     try {
       for (let id of selected) {
-        await API.put(`/requests/${id}`, { status });
+        const res = await API.put(`/requests/${id}`, { status });
+        
+        // ✅ Check for errors on each request
+        if (!res.data.success && res.data.error) {
+          toast.error(`Request #${id}: ${res.data.error}`);
+        }
       }
       if (status === 'Approved') {
-        toast.success(`${selected.length} request(s) approved`);
+        toast.success(`${selected.length} request(s) processed`);
       } else {
         toast.error(`${selected.length} request(s) rejected`);
       }
       setSelected([]);
       fetchData();
     } catch (err) {
-      toast.error('Bulk update failed');
+      const errorMsg = err.response?.data?.error || err.response?.data?.message || 'Bulk update failed';
+      toast.error(errorMsg);
+      console.error('Bulk update error:', err);
     }
   };
 

@@ -125,17 +125,53 @@ exports.createJob = async (req, res) => {
 
     // STAGE B: Auto-generate a material request in Inventory for each part
     // This creates a "Pending" request so the Inventory team is notified automatically
+    // ✅ IMPORTANT: Requests are created REGARDLESS of material availability
+    // Availability check happens during APPROVAL, not creation
+    const materialsUnavailable = []; // Track any materials not available (for job alert)
+    
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
-      const requestId = `REQ-${Date.now()}-${i}`; // Unique ID per request (e.g. REQ-1712345678-0)
-      const requestedBy = req.user ? req.user.name : 'Job Manager'; // Use authenticated user's name
+      const requestId = `REQ-${Date.now()}-${i}`; // Unique ID per request
+      const requestedBy = req.user ? req.user.name : 'Job Manager';
+      
+      // ✅ Check material availability (for alert purposes only, doesn't block request creation)
+      const [materialCheck] = await pool.query(
+        'SELECT * FROM materials WHERE LOWER(TRIM(name)) = LOWER(TRIM(?)) LIMIT 1',
+        [part.name]
+      );
+      
+      if (materialCheck.length === 0) {
+        materialsUnavailable.push(`"${part.name}" - Not found in inventory`);
+      } else {
+        const material = materialCheck[0];
+        const availableQty = Number(material.quantity || 0);
+        const requiredQty = Number(part.requiredQty || 0);
+        
+        if (availableQty < requiredQty) {
+          materialsUnavailable.push(`"${part.name}" - Need ${requiredQty} units, only ${availableQty} available`);
+        }
+      }
+      
+      // ✅ CREATE REQUEST REGARDLESS OF AVAILABILITY
+      // The inventory manager will see it and can reject if material is not available
       await pool.query(
         'INSERT INTO requests (request_id, job_id, material, quantity, requested_by) VALUES (?, ?, ?, ?, ?)',
         [requestId, newJobId, part.name, part.requiredQty, requestedBy]
       );
+      console.log(`✅ Request created: ${requestId} for ${part.requiredQty} units of "${part.name}"`);
     }
+    
     if (parts.length > 0) {
-      console.log(`Auto-created ${parts.length} material request(s) for job ${newJobId}`);
+      console.log(`✅ Created ${parts.length} material request(s) for job ${newJobId}`);
+    }
+    
+    // ⚠️ NEW: Alert user if any materials were unavailable
+    if (materialsUnavailable.length > 0) {
+      await pool.query(
+        'UPDATE jobs SET alert=? WHERE id=?',
+        [`Material shortage: ${materialsUnavailable.join(', ')}`, newJobId]
+      );
+      console.warn(`⚠️  Job ${newJobId} has material shortages: ${materialsUnavailable.join(', ')}`);
     }
 
     console.log('Creating new job in DB:', newJobId); // Log for tracking

@@ -242,10 +242,13 @@ const initializeTables = async () => {
 
     connection.release();
   } catch (err) {
-    console.error('❌ DB connection failed:', err.message);
+    console.error('❌DB connection failed:', err.message);
   }
 };
 
-initializeTables();
+// Only initialize tables if NOT in test mode (tests use mocked pool)
+if (process.env.NODE_ENV !== 'test') {
+  initializeTables();
+}
 
 module.exports = pool;

@@ -82,18 +82,45 @@ exports.updateRequestStatus = async (req, res) => {
     const request = existingRows[0];
     const shouldDeduct = request.status !== 'Approved' && status === 'Approved';
 
-    // Stock deduction logic
-    if (shouldDeduct) {
+    console.log(`🔍 Request #${id}: Material="${request.material}", CurrentStatus="${request.status}", NewStatus="${status}", ShouldDeduct=${shouldDeduct}`);
+
+    // ✅ ALWAYS validate material availability when approving (regardless of previous status)
+    if (status === 'Approved') {
       const [materialRows] = await pool.query(
         'SELECT * FROM materials WHERE LOWER(TRIM(name)) = LOWER(TRIM(?)) ORDER BY id LIMIT 1',
         [request.material]
       );
 
-      if (materialRows.length > 0) {
-        const material = materialRows[0];
-        const currentQty = Number(material.quantity || 0);
-        const deduction = Number(request.quantity || 0);
-        const newQuantity = Math.max(currentQty - deduction, 0);
+      console.log(`🔍 Material search for "${request.material}": Found ${materialRows.length} matches`);
+
+      // ✅ Check if material exists in inventory
+      if (materialRows.length === 0) {
+        console.warn(`❌ Material "${request.material}" NOT FOUND in inventory!`);
+        return res.status(400).json({
+          success: false,
+          error: `Cannot approve: Material "${request.material}" not found in inventory.`
+        });
+      }
+
+      const material = materialRows[0];
+      const currentQty = Number(material.quantity || 0);
+      const deduction = Number(request.quantity || 0);
+
+      console.log(`📦 Material found: "${material.name}", Available: ${currentQty}, Requested: ${deduction}`);
+
+      // ✅ Check if enough inventory is available
+      if (currentQty < deduction) {
+        console.warn(`❌ Insufficient inventory! Need ${deduction}, but only ${currentQty} available.`);
+        return res.status(400).json({
+          success: false,
+          error: `Cannot approve: Insufficient inventory. Need ${deduction} units of "${request.material}", but only ${currentQty} available.`
+        });
+      }
+
+      console.log(`✅ Material check passed! Deducting ${deduction} units...`);
+
+      if (shouldDeduct) {
+        const newQuantity = currentQty - deduction;
 
         await pool.query('UPDATE materials SET quantity=? WHERE id=?', [newQuantity, material.id]);
         await recordStockMovement(
@@ -105,19 +132,20 @@ exports.updateRequestStatus = async (req, res) => {
           'Request',
           id
         );
-      } else {
-        console.warn(`Material not found for approved request ${request.request_id}`);
+        console.log(`✅ Stock deducted: ${currentQty} → ${newQuantity}`);
       }
     }
+
     await pool.query('UPDATE requests SET status=? WHERE id=?', [status, id]);
+    console.log(`✅ Request #${id} status updated to "${status}"`);
 
     // Fetch the updated request to get the linked job_id
     const [rows] = await pool.query('SELECT * FROM requests WHERE id=?', [id]);
-    const request = rows[0];
+    const updatedRequest = rows[0];
 
     // === AUTO JOB STATUS UPDATE — Only runs when a request is linked to a job ===
-    if (request && request.job_id) {
-      const jobId = request.job_id;
+    if (updatedRequest && updatedRequest.job_id) {
+      const jobId = updatedRequest.job_id;
 
       if (status === 'Rejected') {
         // Any rejection immediately flags the job as having a material shortage
