@@ -64,6 +64,19 @@ Object.defineProperty(window, 'matchMedia', {
 global.alert = vi.fn();
 
 /**
+ * Mock localStorage
+ * Tests in Job Management rely on mocking getItem
+ */
+Object.defineProperty(window, 'localStorage', {
+  value: {
+    getItem: vi.fn(),
+    setItem: vi.fn(),
+    removeItem: vi.fn(),
+    clear: vi.fn(),
+  },
+});
+
+/**
  * Suppress expected React warnings (optional)
  * Keeps test output clean
  */

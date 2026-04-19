@@ -10,25 +10,24 @@ export default defineConfig({
     env: {
       VITE_API_URL: 'http://localhost:5001/api',
     },
-<<<<<<< HEAD:src/frontend/vitest.config.js
-    
-    // Run setup files before all tests
-    setupFiles: [path.resolve(__dirname, '../../tests/frontend/setup.js')],
+    // Run unified setup files before all tests
+    setupFiles: [
+      path.resolve(__dirname, '../../tests/frontend-setup.js'),
+    ],
     
     // Explicitly include test directories outside the root
-    include: [path.resolve(__dirname, '../../tests/frontend/**/*.test.{js,jsx}').replace(/\\/g, '/')],
+    include: [path.resolve(__dirname, '../../tests/**/frontend/**/*.test.{js,jsx}').replace(/\\/g, '/')],
+    esbuild: {
+      jsxInject: `import React from 'react'`,
+    },
     
     // Coverage reporting configuration
-=======
-    setupFiles: ['./src/__tests__/setup.js', './setupTests.js'],
->>>>>>> 86217cecd5a32e74f39b2ca30b12e17dd9b885d4:frontend/vitest.config.js
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
       exclude: [
         'node_modules/',
-        '../../tests/frontend/',
-        '**/*.test.jsx',
+        '../../tests/**/mocks/',
       ],
       lines: 70,
       functions: 70,

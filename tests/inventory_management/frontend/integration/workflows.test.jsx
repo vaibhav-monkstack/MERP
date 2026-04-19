@@ -80,7 +80,7 @@ describe('Frontend Integration Tests - WF-001 to WF-005', () => {
      */
     it('WF-001: Low Stock Alert to Reorder', async () => {
       // ARRANGE: Get API mock
-      const API = require('../../../src/frontend/src/api/api').default;
+      const API = require('../../../../src/frontend/src/api/api').default;
 
       // ACT Step 1: Dashboard shows low stock alert
       const summary = await API.get('/reports/inventory-summary');
@@ -107,7 +107,7 @@ describe('Frontend Integration Tests - WF-001 to WF-005', () => {
      */
     it('WF-002: Create & Approve Request', async () => {
       // ARRANGE: Get API mock
-      const API = require('../../../src/frontend/src/api/api').default;
+      const API = require('../../../../src/frontend/src/api/api').default;
 
       // ACT Step 1: Fetch materials to see availability
       const materials = await API.get('/materials');
@@ -140,7 +140,7 @@ describe('Frontend Integration Tests - WF-001 to WF-005', () => {
      */
     it('WF-003: Receive Purchase Order', async () => {
       // ARRANGE: Get API mock
-      const API = require('../../../src/frontend/src/api/api').default;
+      const API = require('../../../../src/frontend/src/api/api').default;
 
       // ACT Step 1: Get initial inventory qty
       const materialsBefore = await API.get('/materials');
@@ -163,7 +163,7 @@ describe('Frontend Integration Tests - WF-001 to WF-005', () => {
      */
     it('WF-004: Real-time Inventory Updates', async () => {
       // ARRANGE: Get API mock
-      const API = require('../../../src/frontend/src/api/api').default;
+      const API = require('../../../../src/frontend/src/api/api').default;
 
       // ACT Step 1: Update material manually (manual adjustment)
       await API.put('/materials/1', { quantity: 80 });
@@ -188,7 +188,7 @@ describe('Frontend Integration Tests - WF-001 to WF-005', () => {
      */
     it('WF-005: Audit Trail Completeness', async () => {
       // ARRANGE: Get API mock and simulate complete workflow
-      const API = require('../../../src/frontend/src/api/api').default;
+      const API = require('../../../../src/frontend/src/api/api').default;
 
       // ACT: Simulate complete workflow with multiple operations
       // 1. Create material (qty=1000)

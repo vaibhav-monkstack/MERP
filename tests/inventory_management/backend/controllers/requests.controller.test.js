@@ -11,14 +11,14 @@
  * Test coverage: 15 tests (BC-021 to BC-035)
  */
 
-const pool = require('../../../src/backend/config/db');
-const { getRequests, addRequest, updateRequestStatus, deleteRequest } = require('../../../src/backend/controllers/requestsController');
+const pool = require('../../../../src/backend/config/db');
+const { getRequests, addRequest, updateRequestStatus, deleteRequest } = require('../../../../src/backend/controllers/requestsController');
 
 // Mock the pool - prevents real database calls during tests
-jest.mock('../../../src/backend/config/db');
+jest.mock('../../../../src/backend/config/db');
 
 // Mock the stock controller - isolates request tests from movement recording
-jest.mock('../../../src/backend/controllers/stockController', () => ({
+jest.mock('../../../../src/backend/controllers/stockController', () => ({
   recordStockMovement: jest.fn().mockResolvedValue(undefined),
 }));
 
@@ -248,7 +248,7 @@ describe('Requests Controller - Unit Tests', () => {
      */
     test('BC-029: Approve request deducts inventory', async () => {
       // ARRANGE: Import mocked recordStockMovement
-      const { recordStockMovement } = require('../../../src/backend/controllers/stockController');
+      const { recordStockMovement } = require('../../../../src/backend/controllers/stockController');
       mockRequest.params = { id: 1 };
       mockRequest.body = { status: 'Approved' };
 

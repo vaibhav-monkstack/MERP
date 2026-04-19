@@ -1,11 +1,11 @@
-const { getJobs, getPendingOrders, createJob, updateJob, deleteJob, approveJob } = require('../../backend/controllers/jobController');
+const { getJobs, getPendingOrders, createJob, updateJob, deleteJob, approveJob } = require('../../../src/backend/controllers/jobController');
 
 // Mock the database pool
-jest.mock('../../backend/config/db', () => ({
+jest.mock('../../../src/backend/config/db', () => ({
   query: jest.fn(),
 }));
 
-const pool = require('../../backend/config/db');
+const pool = require('../../../src/backend/config/db');
 
 describe('Job Controller', () => {
   let req, res;
@@ -29,13 +29,13 @@ describe('Job Controller', () => {
       const mockJobs = [{ id: 'JOB-1', product: 'Test Product' }];
       const mockTotal = [{ total: 1 }];
       pool.query.mockResolvedValueOnce([mockJobs]).mockResolvedValueOnce([mockTotal]);
-      pool.query.mockResolvedValueOnce([[]]);
+      pool.query.mockResolvedValueOnce([[]]).mockResolvedValueOnce([[]]);
 
       await getJobs(req, res);
 
-      expect(pool.query).toHaveBeenCalledTimes(3);
+      expect(pool.query).toHaveBeenCalledTimes(4);
       expect(res.json).toHaveBeenCalledWith({
-        jobs: [{ id: 'JOB-1', product: 'Test Product', parts: [] }],
+        jobs: [{ id: 'JOB-1', product: 'Test Product', parts: [], tasks: [] }],
         pagination: { total: 1, page: 1, limit: 1000, totalPages: 1 },
       });
     });
@@ -45,7 +45,7 @@ describe('Job Controller', () => {
       const mockJobs = [{ id: 'JOB-1', product: 'Test Product' }];
       const mockTotal = [{ total: 1 }];
       pool.query.mockResolvedValueOnce([mockJobs]).mockResolvedValueOnce([mockTotal]);
-      pool.query.mockResolvedValueOnce([[]]);
+      pool.query.mockResolvedValueOnce([[]]).mockResolvedValueOnce([[]]);
 
       await getJobs(req, res);
 
@@ -76,7 +76,7 @@ describe('Job Controller', () => {
       SELECT o.id as orderId, o.customer_name, o.item_name, o.quantity, o.priority, o.deadline, o.created_at
       FROM orders o
       LEFT JOIN jobs j ON o.id = j.orderId
-      WHERE o.status = 'confirmed' AND j.orderId IS NULL
+      WHERE (o.status = 'confirmed' OR o.status = 'processing') AND j.orderId IS NULL
       ORDER BY o.created_at ASC
     `);
       expect(res.json).toHaveBeenCalledWith(mockOrders);
@@ -102,7 +102,7 @@ describe('Job Controller', () => {
 
       expect(pool.query).toHaveBeenCalledWith(
         'INSERT INTO jobs (id, product, quantity, team, status, priority, progress, deadline, notes, alert, orderId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [expect.stringMatching(/^JOB-\d+$/), 'Test Product', 10, 'Team A', 'Created', 'Medium', 0, null, '', '', null]
+        [expect.stringMatching(/^JOB-\d+$/), 'Test Product', 10, 'Team A', 'Pending Approval', 'Medium', 0, null, '', '', null]
       );
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith({
@@ -126,7 +126,14 @@ describe('Job Controller', () => {
     it('should create a job with parts and auto-generate material requests', async () => {
       req.body = { product: 'Test Product', quantity: 10, team: 'Team A', parts: [{ name: 'Part A', requiredQty: 5 }] };
       const mockJob = [{ id: 'JOB-123', product: 'Test Product' }];
-      pool.query.mockResolvedValueOnce().mockResolvedValueOnce().mockResolvedValueOnce().mockResolvedValueOnce([mockJob]).mockResolvedValueOnce([[]]);
+      
+      pool.query
+        .mockResolvedValueOnce() // INSERT jobs
+        .mockResolvedValueOnce() // INSERT job_parts
+        .mockResolvedValueOnce([[{ quantity: 100 }]]) // SELECT materials
+        .mockResolvedValueOnce() // INSERT requests
+        .mockResolvedValueOnce([mockJob]) // SELECT jobs
+        .mockResolvedValueOnce([[]]); // SELECT job_parts
 
       await createJob(req, res);
 
@@ -227,7 +234,7 @@ describe('Job Controller', () => {
 
       await approveJob(req, res);
 
-      expect(pool.query).toHaveBeenCalledWith('UPDATE jobs SET status = "Created" WHERE id = ?', ['JOB-123']);
+      expect(pool.query).toHaveBeenCalledWith('UPDATE jobs SET status = "Production" WHERE id = ?', ['JOB-123']);
       expect(pool.query).toHaveBeenCalledWith('INSERT INTO order_history (order_id, status, remarks) VALUES (?, ?, ?)',
         [1, 'processing', expect.stringMatching(/^Job JOB-123 approved by manager. Production started.$/)]);
       expect(res.json).toHaveBeenCalledWith({

@@ -129,7 +129,7 @@ describe('Requests Component - FE-016 to FE-023', () => {
    */
   it('FE-018: Approve request button triggers update', () => {
     // ARRANGE: Setup mock request and API
-    const API = require('../../../src/frontend/src/api/api').default;
+    const API = require('../../../../src/frontend/src/api/api').default;
     const mockRequest = { id: 1, status: 'Pending', material: 'Steel', quantity: 100 };
 
     // ACT: Verify API.put method is available
@@ -146,7 +146,7 @@ describe('Requests Component - FE-016 to FE-023', () => {
    */
   it('FE-019: Deny request button triggers update', () => {
     // ARRANGE: Setup mock request and API
-    const API = require('../../../src/frontend/src/api/api').default;
+    const API = require('../../../../src/frontend/src/api/api').default;
     const mockRequest = { id: 1, status: 'Pending', material: 'Steel', quantity: 100 };
 
     // ACT: Verify API.put method is available
@@ -163,7 +163,7 @@ describe('Requests Component - FE-016 to FE-023', () => {
    */
   it('FE-020: Delete request triggers delete action', () => {
     // ARRANGE: Setup delete API mock
-    const API = require('../../../src/frontend/src/api/api').default;
+    const API = require('../../../../src/frontend/src/api/api').default;
     const requestId = 1;
 
     // ACT: Verify API.delete method is available

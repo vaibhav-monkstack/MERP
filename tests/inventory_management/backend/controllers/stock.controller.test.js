@@ -9,11 +9,11 @@
  * Test coverage: 10 tests (BC-013 to BC-020)
  */
 
-const pool = require('../../../src/backend/config/db');
-const { recordStockMovement, getStockMovements } = require('../../../src/backend/controllers/stockController');
+const pool = require('../../../../src/backend/config/db');
+const { recordStockMovement, getStockMovements } = require('../../../../src/backend/controllers/stockController');
 
 // Mock the pool - prevents real database calls during tests
-jest.mock('../../../src/backend/config/db');
+jest.mock('../../../../src/backend/config/db');
 
 describe('Stock Controller - Unit Tests', () => {
   let mockRequest, mockResponse;

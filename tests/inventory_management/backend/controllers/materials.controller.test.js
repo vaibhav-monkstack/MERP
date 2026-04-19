@@ -10,19 +10,19 @@
  * Test coverage: 12 tests (BC-001 to BC-012)
  */
 
-const pool = require('../../../src/backend/config/db');
+const pool = require('../../../../src/backend/config/db');
 const {
   getMaterials,
   addMaterial,
   updateMaterial,
   deleteMaterial,
-} = require('../../../src/backend/controllers/materialsController');
+} = require('../../../../src/backend/controllers/materialsController');
 
 // Mock the pool - prevents real database calls during tests
-jest.mock('../../../src/backend/config/db');
+jest.mock('../../../../src/backend/config/db');
 
 // Mock the stock controller - isolates material tests from inventory tracking
-jest.mock('../../../src/backend/controllers/stockController', () => ({
+jest.mock('../../../../src/backend/controllers/stockController', () => ({
   recordStockMovement: jest.fn().mockResolvedValue(undefined),
 }));
 
@@ -248,7 +248,7 @@ describe('Materials Controller - Unit Tests', () => {
      */
     test('BC-010: Update creates stock movement record for quantity change', async () => {
       // ARRANGE: Import mocked stockController
-      const { recordStockMovement } = require('../../../src/backend/controllers/stockController');
+      const { recordStockMovement } = require('../../../../src/backend/controllers/stockController');
       mockRequest.params = { id: 1 };
       mockRequest.body = {
         name: 'Steel',

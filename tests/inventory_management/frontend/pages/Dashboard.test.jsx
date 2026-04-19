@@ -30,71 +30,17 @@ vi.mock('chart.js', () => ({
 }));
 
 vi.mock('react-chartjs-2', () => {
-  const { createElement: h } = require('../../../src/frontend/node_modules/react');
   return {
-    Bar: ({ data, options }) => h('div', { 'data-testid': 'bar-chart' }, 'Chart Bar Mock'),
-    Line: ({ data, options }) => h('div', { 'data-testid': 'line-chart' }, 'Chart Line Mock'),
-    Pie: ({ data, options }) => h('div', { 'data-testid': 'pie-chart' }, 'Chart Pie Mock'),
+    Bar: () => <div data-testid="bar-chart">Chart Bar Mock</div>,
+    Line: () => <div data-testid="line-chart">Chart Line Mock</div>,
+    Pie: () => <div data-testid="pie-chart">Chart Pie Mock</div>,
   };
 });
 
 // Import Dashboard AFTER mocking chart.js
 import Dashboard from '@/pages/inventory/Dashboard';
 
-// Mock the API module - prevents real API calls during tests
-// All /reports endpoints intercepted by MSW
-vi.mock('@/api/api', () => ({
-  default: {
-    get: vi.fn(async (url) => {
-      if (url === '/reports/inventory-summary') {
-        return {
-          data: {
-            success: true,
-            data: {
-              total_materials: 3,
-              low_stock_count: 1,
-              pending_requests: 2,
-              approved_requests: 1,
-              total_inventory_value: 45000,
-              stock_levels: [
-                { name: 'Steel', quantity: 100 },
-                { name: 'Copper', quantity: 20 },
-                { name: 'Aluminum', quantity: 300 },
-              ],
-            },
-          },
-        };
-      }
-      if (url === '/materials') {
-        return {
-          data: [
-            { id: 1, name: 'Steel', quantity: 100, min_stock: 100 },
-            { id: 2, name: 'Copper', quantity: 20, min_stock: 50 },
-            { id: 3, name: 'Aluminum', quantity: 300, min_stock: 150 },
-          ],
-        };
-      }
-      if (url === '/requests') {
-        return {
-          data: {
-            success: true,
-            data: [
-              { id: 1, status: 'Pending', quantity: 50 },
-              { id: 2, status: 'Approved', quantity: 30 },
-            ],
-          },
-        };
-      }
-      return { data: {} };
-    }),
-    post: vi.fn(async (url) => {
-      if (url === '/materials/reorder-scan') {
-        return { data: { created_requests: 3 } };
-      }
-      return { data: {} };
-    }),
-  },
-}));
+// Mock the API module removed, using global MSW handlers
 
 // Helper to render components with Router context
 const renderWithRouter = (component) => {
@@ -183,8 +129,9 @@ describe('Dashboard Component - FE-001 to FE-007', () => {
     renderWithRouter(<Dashboard />);
 
     // ACT: Wait for dashboard to load (check for KPI card)
-    await waitFor(() => {
-      expect(screen.getByText(/Total Materials/i)).toBeInTheDocument();
+    await waitFor(async () => {
+      const stats = await screen.findAllByText(/Total Materials/i);
+      expect(stats.length).toBeGreaterThan(0);
     });
 
     // ACT: Click auto-reorder scan button

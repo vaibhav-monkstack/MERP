@@ -14,9 +14,10 @@ module.exports = {
   testEnvironment: 'node',
 
   // Find all test files in tests directory ending with .test.js
-  roots: ['<rootDir>', '<rootDir>/../../tests/backend'],
+  // Find all test files in tests directory ending with .test.js
+  roots: ['<rootDir>', '<rootDir>/../../tests/'],
   moduleDirectories: ['node_modules', '<rootDir>/node_modules'],
-  testMatch: ['<rootDir>/../../tests/backend/**/*.test.js'],
+  testMatch: ['<rootDir>/../../tests/**/*.test.js'],
 
   // Output coverage reports to coverage/ directory
   coverageDirectory: 'coverage',
@@ -41,7 +42,7 @@ module.exports = {
   },
 
   // Run setup file before tests to configure test environment
-  setupFilesAfterEnv: ['<rootDir>/../../tests/backend/setup.js'],
+  setupFilesAfterEnv: ['<rootDir>/../../tests/inventory_management/backend/setup.js'],
 
   // Increase timeout for async operations (10 seconds)
   testTimeout: 10000,
