@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 // Import the shared job context for job data and QC record operations
 import { useJobs } from '../../context/JobContext';
+import axios from 'axios';
 // Import various icons used throughout the QC page UI
 import { 
   ArrowLeft,        // Back button icon
@@ -27,11 +28,13 @@ import {
 // and the job status changes to "Rework".
 // ============================================================
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+
 const QualityCheck = () => {
   const { id } = useParams();           // Get the job ID from the URL (e.g., /job/JOB-001/qc)
   const navigate = useNavigate();        // Hook for page navigation
   // Get job data and QC functions from the shared context
-  const { getJobById, updateJob, addQCRecord, getQCRecordsByJobId } = useJobs();
+  const { getJobById, updateJob, addQCRecord, getQCRecordsByJobId, loading } = useJobs();
   const job = getJobById(id);            // Find the job by ID
   const history = getQCRecordsByJobId(id); // Get previous QC records for this job
 
@@ -60,7 +63,7 @@ const QualityCheck = () => {
   useEffect(() => {
     const fetchTeams = async () => {
       try {
-        const res = await API.get('/teams', {
+        const res = await axios.get(`${API_BASE}/teams`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         setAvailableTeams(res.data || []);
@@ -71,8 +74,11 @@ const QualityCheck = () => {
     fetchTeams();
   }, []);
 
+  // If the data is still loading from the API, show a loading state
+  if (loading) return <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>Loading job details...</div>;
+
   // If the job doesn't exist, show an error message
-  if (!job) return <div style={{ padding: '40px' }}>Job not found.</div>;
+  if (!job) return <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>Job not found.</div>;
 
   // Calculate how many checklist items passed vs failed
   const passedCount = checklist.filter(item => item.passed).length;

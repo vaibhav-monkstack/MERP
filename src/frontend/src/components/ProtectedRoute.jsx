@@ -10,6 +10,9 @@ import { ROLES } from '../utils/constants';
  * @param {React.ReactNode} children - The component to render if authorized
  */
 const ProtectedRoute = ({ allowedRoles, children }) => {
+  // Temporarily bypass all login and role checks for accessing any section
+  return children;
+  /*
   const location = useLocation();
   const token = localStorage.getItem('token');
   const userRole = localStorage.getItem('role');
@@ -35,6 +38,7 @@ const ProtectedRoute = ({ allowedRoles, children }) => {
 
   // 4. If authorized, render the protected component
   return children;
+  */
 };
 
 export default ProtectedRoute;

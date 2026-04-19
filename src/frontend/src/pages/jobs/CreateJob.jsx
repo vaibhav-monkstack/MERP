@@ -182,11 +182,12 @@ const CreateJob = () => {
         {/* Manual Template Picker (only shown if not from an order) */}
         {!formData.orderId && templates.length > 0 && (
           <div style={{ marginBottom: '20px' }}>
-            <label style={styles.label}>
+            <label htmlFor="template-select" style={styles.label}>
               <Layers size={14} style={{ display: 'inline', marginRight: '6px' }} />
               Load from Product Template
             </label>
             <select
+              id="template-select"
               style={styles.select}
               value={templateName}
               onChange={e => {
@@ -203,8 +204,9 @@ const CreateJob = () => {
         <form onSubmit={handleSubmit} style={styles.form}>
           {/* Product name input */}
           <div style={styles.inputGroup}>
-            <label style={styles.label}>Product Name</label>
+            <label htmlFor="product" style={styles.label}>Product Name</label>
             <input 
+              id="product"
               type="text" 
               placeholder="Enter product name" 
               style={styles.input} 
@@ -217,8 +219,9 @@ const CreateJob = () => {
           {/* Quantity and Team — displayed side by side */}
           <div style={styles.row} className="responsive-grid-2">
             <div style={styles.inputGroup}>
-              <label style={styles.label}>Quantity</label>
+              <label htmlFor="quantity" style={styles.label}>Quantity</label>
               <input 
+                id="quantity"
                 type="number" 
                 placeholder="0" 
                 style={styles.input} 
@@ -228,8 +231,9 @@ const CreateJob = () => {
               />
             </div>
             <div style={styles.inputGroup}>
-              <label style={styles.label}>Team</label>
+              <label htmlFor="team" style={styles.label}>Team</label>
               <select 
+                id="team"
                 style={styles.select}
                 value={formData.team}
                 onChange={(e) => setFormData({...formData, team: e.target.value})}
@@ -246,8 +250,9 @@ const CreateJob = () => {
           {/* Priority and Deadline — displayed side by side */}
           <div style={styles.row} className="responsive-grid-2">
             <div style={styles.inputGroup}>
-              <label style={styles.label}>Priority</label>
+              <label htmlFor="priority" style={styles.label}>Priority</label>
               <select 
+                id="priority"
                 style={styles.select}
                 value={formData.priority}
                 onChange={(e) => setFormData({...formData, priority: e.target.value})}
@@ -259,8 +264,9 @@ const CreateJob = () => {
               </select>
             </div>
             <div style={styles.inputGroup}>
-              <label style={styles.label}>Deadline</label>
+              <label htmlFor="deadline" style={styles.label}>Deadline</label>
               <input 
+                id="deadline"
                 type="date" 
                 style={styles.input} 
                 value={formData.deadline}
@@ -272,8 +278,9 @@ const CreateJob = () => {
 
           {/* Notes section */}
           <div style={styles.inputGroup}>
-            <label style={styles.label}>Special Instructions / Notes</label>
+            <label htmlFor="notes" style={styles.label}>Special Instructions / Notes</label>
             <textarea 
+              id="notes"
               placeholder="Enter any special handling instructions..." 
               style={styles.textarea}
               value={formData.notes}

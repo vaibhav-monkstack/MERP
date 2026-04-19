@@ -50,7 +50,7 @@ const STATUS_COLORS = {
 const JobTracking = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getJobById, updateJob } = useJobs();
+  const { getJobById, updateJob, loading } = useJobs();
   const job = getJobById(id);
   
   const role = localStorage.getItem('role');
@@ -78,11 +78,6 @@ const JobTracking = () => {
   });
   const [completingAssembly, setCompletingAssembly] = useState(false);
 
-  if (!job) return <div style={{ padding: '40px' }}>Job not found.</div>;
-
-  const stages = ['Created', 'Materials Ready', 'Production', 'Assembly', 'Quality Check', 'Completed'];
-  const jobParts = job.parts || [];
-
   // ── Fetch schedule data whenever the schedule tab is opened ──────────────
   const fetchSchedule = async () => {
     setSchedLoad(true);
@@ -102,8 +97,14 @@ const JobTracking = () => {
   };
 
   useEffect(() => {
-    if (activeTab === 'schedule') fetchSchedule();
-  }, [activeTab, id]);
+    if (activeTab === 'schedule' && job) fetchSchedule();
+  }, [activeTab, id, job]);
+
+  if (loading) return <div style={{ padding: '40px', color: '#6b7280', textAlign: 'center' }}>Loading job tracking...</div>;
+  if (!job) return <div style={{ padding: '40px', color: '#6b7280', textAlign: 'center' }}>Job not found.</div>;
+
+  const stages = ['Created', 'Materials Ready', 'Production', 'Assembly', 'Quality Check', 'Completed'];
+  const jobParts = job.parts || [];
 
   // ── Auto-schedule ────────────────────────────────────────────────────────
   const handleAutoSchedule = async () => {

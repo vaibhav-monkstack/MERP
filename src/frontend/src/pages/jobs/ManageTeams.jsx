@@ -222,7 +222,7 @@ const ManageTeams = () => {
 
       {/* Back Link */}
       <div style={{ marginBottom: '24px' }}>
-        <button 
+        <button
           onClick={() => navigate('/jobs')}
           style={styles.backBtn}
         >
@@ -256,7 +256,7 @@ const ManageTeams = () => {
             <Users size={20} color="#6366f1" />
           </div>
           <div>
-            <div style={styles.miniStatNumber}>{teams.length}</div>
+            <div style={styles.miniStatNumber} data-testid="stats-teams-count">{teams.length}</div>
             <div style={styles.miniStatLabel}>Teams</div>
           </div>
         </div>
@@ -265,7 +265,7 @@ const ManageTeams = () => {
             <User size={20} color="#22c55e" />
           </div>
           <div>
-            <div style={styles.miniStatNumber}>{workers.length}</div>
+            <div style={styles.miniStatNumber} data-testid="stats-workers-count">{workers.length}</div>
             <div style={styles.miniStatLabel}>Workers</div>
           </div>
         </div>
@@ -274,30 +274,33 @@ const ManageTeams = () => {
             <Shield size={20} color="#3b82f6" />
           </div>
           <div>
-            <div style={styles.miniStatNumber}>
-              {teams.reduce((acc, t) => acc + t.members.length, 0)}
-            </div>
+              <div data-testid="stats-assignments-count">
+                {teams.reduce((acc, t) => acc + t.members.length, 0)}
+              </div>
             <div style={styles.miniStatLabel}>Assignments</div>
           </div>
         </div>
       </div>
 
       {/* Search Wrapper */}
-      <div style={styles.searchWrapper} className="w-full md:w-auto">
-        <Search size={20} color="#9ca3af" style={styles.searchIcon} />
-        <input 
-          type="text" 
-          placeholder="Search teams or members..." 
-          style={styles.searchInput}
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+      <div style={styles.searchRow}>
+        <div style={styles.searchWrapper}>
+          <Search size={18} style={styles.searchIcon} />
+          <input
+            type="text"
+            placeholder="Search teams or members..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={styles.searchInput}
+            data-testid="team-search-input"
+          />
+        </div>
       </div>
 
       {/* Teams Grid */}
       <div style={styles.teamsGrid} className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
         {filteredTeams.map((team) => (
-          <div key={team.id} style={styles.teamCard}>
+          <div key={team.id} style={styles.teamCard} className="team-card" data-testid={`team-card-${team.name}`}>
             <div style={styles.teamCardHeader}>
               <div style={styles.teamNameRow}>
                 {editingTeam === team.id ? (
@@ -327,7 +330,7 @@ const ManageTeams = () => {
                       }}>
                         <Edit2 size={14} />
                       </button>
-                      <button style={styles.iconBtnRed} title="Delete" onClick={() => handleDeleteTeam(team.id, team.name)}>
+                      <button style={styles.iconBtnRed} title="Delete" onClick={() => handleDeleteTeam(team.id, team.name)} data-testid="delete-team-btn">
                         <Trash2 size={14} />
                       </button>
                     </div>
@@ -370,6 +373,7 @@ const ManageTeams = () => {
                 setAddMemberTeamId(team.id);
                 setShowAddMember(true);
               }}
+              data-testid="add-member-box"
             >
               <UserPlus size={16} />
               <span>Add Member</span>
@@ -487,7 +491,7 @@ const ManageTeams = () => {
       {/* Add Member Modal */}
       {showAddMember && (
         <div style={styles.modalOverlay} onClick={() => setShowAddMember(false)}>
-          <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+          <div style={styles.modal} onClick={(e) => e.stopPropagation()} data-testid="add-member-modal">
             <div style={styles.modalHeader}>
               <h3 style={styles.modalTitle}>Add Member to Team</h3>
               <button style={styles.modalCloseBtn} onClick={() => setShowAddMember(false)}>
@@ -499,21 +503,22 @@ const ManageTeams = () => {
                 <p style={styles.noWorkersText}>All workers are already assigned to this team.</p>
               ) : (
                 <div style={styles.availableWorkersList}>
-                  {getAvailableWorkers(addMemberTeamId).map((worker) => (
-                    <div key={worker.id} style={styles.availableWorkerRow}>
+                  {getAvailableWorkers(addMemberTeamId).map((user) => (
+                    <div key={user.id} style={styles.workerRow} data-testid={`worker-row-${user.name}`}>
                       <div style={styles.memberInfo}>
-                        <div style={styles.memberAvatar}>{getInitials(worker.name)}</div>
+                        <div style={styles.memberAvatar}>{getInitials(user.name)}</div>
                         <div>
-                          <div style={styles.memberName}>{worker.name}</div>
-                          <div style={styles.memberEmail}>{worker.email}</div>
+                          <div style={styles.memberName}>{user.name}</div>
+                          <div style={styles.memberEmail}>{user.email}</div>
                         </div>
                       </div>
                       <button
                         style={styles.addBtn}
-                        onClick={() => handleAddMember(worker.id)}
+                        onClick={() => handleAddMember(user.id)}
+                        data-testid="add-specific-worker-btn"
                       >
                         <Plus size={16} />
-                        Add
+                        <span>Add</span>
                       </button>
                     </div>
                   ))}

@@ -65,17 +65,22 @@ const WorkerTaskPanel = () => {
   }, [id, navigate, token]);
 
   // Fetch tasks from the backend (filtered by job ID if one is provided)
-  const fetchTasks = async () => {
+  const fetchTasks = async (retryCount = 0) => {
     try {
-      // Build URL: if we have a job ID, filter tasks for that job; otherwise get all tasks
-      const url = id
-        ? `${API_BASE}/tasks?jobId=${id}`
-        : `${API_BASE}/tasks`;
-
+      const url = id ? `${API_BASE}/tasks?jobId=${id}` : `${API_BASE}/tasks`;
       const response = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setTasks(response.data); // Store the fetched tasks
+      
+      const fetchedTasks = response.data;
+      setTasks(fetchedTasks);
+
+      // Self-healing: If viewing a specific job and no tasks found, retry a few times
+      // (Handles database propagation delays)
+      if (id && fetchedTasks.length === 0 && retryCount < 5) {
+        console.log(`No tasks found for ${id}, retrying in 3s... (Attempt ${retryCount + 1})`);
+        setTimeout(() => fetchTasks(retryCount + 1), 3000);
+      }
     } catch (error) {
       console.error('Error fetching tasks', error);
     }
@@ -320,7 +325,7 @@ const WorkerTaskPanel = () => {
                   const stepColor = task.processStep ? (STEP_COLORS[task.processStep] || { bg:'#f3f4f6', text:'#374151' }) : null;
 
                   return (
-                  <tr key={task.taskId} style={styles.tr}>
+                  <tr key={task.taskId} style={styles.tr} data-testid="task-row">
                     <td style={styles.tdBold}>{task.partName}</td>
                     <td style={styles.td}>
                       {task.processStep ? (

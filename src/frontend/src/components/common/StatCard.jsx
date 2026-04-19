@@ -13,13 +13,14 @@ import React from 'react';
  */
 const StatCard = ({ title, value, description, icon: Icon, iconColor = "#6b7280" }) => {
   return (
-    <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 transition-all hover:shadow-md">
+    <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 transition-all hover:shadow-md" data-testid={`stat-card-${title.toLowerCase().replace(/\s+/g, '-')}`}>
       <div className="flex justify-between items-center mb-3">
-        <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider">{title}</span>
+        <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider" data-testid={`stat-title-${title.toLowerCase().replace(/\s+/g, '-')}`}>{title}</span>
         {Icon && <Icon size={22} color={iconColor} className="opacity-80" />}
       </div>
-      <div className="text-3xl font-extrabold text-gray-900 mb-1">{value}</div>
-      {description && <div className="text-xs font-medium text-gray-400">{description}</div>}
+      <div className="text-3xl font-extrabold text-gray-900 mb-1" data-testid={`stat-value-${title.toLowerCase().replace(/\s+/g, '-')}`}>{value}</div>
+      {description && <div className="text-xs font-medium text-gray-400" data-testid={`stat-description-${title.toLowerCase().replace(/\s+/g, '-')}`}>{description}</div>}
+      <label htmlFor={`stat-input-${title.toLowerCase().replace(/\s+/g, '-')}`} className="sr-only">{title}</label>
     </div>
   );
 };

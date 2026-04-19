@@ -59,6 +59,17 @@ const ManagerDashboard = () => {
   // Separate jobs pending approval
   const jobsPendingApproval = jobs.filter(j => j.status === 'Pending Approval');
   const activeJobs = jobs.filter(j => j.status !== 'Pending Approval');
+
+  // Filter pending jobs based on search term
+  const filteredPending = jobsPendingApproval.filter(job => {
+    if (!searchTerm) return true;
+    const lowerSearch = searchTerm.toLowerCase();
+    return (
+      job.product.toLowerCase().includes(lowerSearch) ||
+      job.team.toLowerCase().includes(lowerSearch) ||
+      job.id.toLowerCase().includes(lowerSearch)
+    );
+  });
   
   // Sorting state
   const [sortConfig, setSortConfig] = useState({ key: 'id', direction: 'desc' });
@@ -414,7 +425,7 @@ const ManagerDashboard = () => {
         )}
 
         {/* JOBS PENDING APPROVAL SECTION */}
-        {jobsPendingApproval.length > 0 && (
+        {filteredPending.length > 0 && (statusFilter === 'All Status' || statusFilter === 'Pending Approval') && (
           <div className="mb-10 animate-in fade-in slide-in-from-top-4 duration-700">
             <div className="flex items-center gap-2 mb-4">
               <div className="bg-amber-100 p-1.5 rounded-lg">
@@ -427,7 +438,7 @@ const ManagerDashboard = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {jobsPendingApproval.map((job) => (
+              {filteredPending.map((job) => (
                 <div 
                   key={job.id} 
                   className="bg-white rounded-[32px] shadow-sm border border-slate-100 hover:shadow-xl hover:border-amber-200 transition-all duration-300 group relative overflow-hidden flex flex-col"

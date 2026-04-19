@@ -231,7 +231,7 @@ export default function Requests() {
               headers={tableHeaders}
               data={filtered}
               renderRow={(r) => (
-                <tr key={r.id} className="hover:bg-slate-50/80 transition-colors border-b border-slate-50 last:border-none">
+                <tr key={r.id} data-testid={`request-row-${r.job_id}`} className="hover:bg-slate-50/80 transition-colors border-b border-slate-50 last:border-none">
                   <td className="px-6 py-5">
                     <input
                       type="checkbox"
@@ -261,18 +261,20 @@ export default function Requests() {
                   </td>
                   <td className="px-6 py-5">
                     <div className="flex justify-end gap-2">
-                      <button
-                        onClick={() => update(r.id, "Approved")}
-                        className="p-2 hover:bg-emerald-50 hover:shadow-sm rounded-xl transition-all text-slate-400 hover:text-emerald-600 border border-transparent hover:border-emerald-100"
-                        title="Approve"
-                      >
+                        <button
+                          onClick={() => update(r.id, "Approved")}
+                          className="p-2 hover:bg-emerald-50 hover:shadow-sm rounded-xl transition-all text-slate-400 hover:text-emerald-600 border border-transparent hover:border-emerald-100"
+                          title="Approve"
+                          data-testid="approve-request-btn"
+                        >
                         <CheckCircle size={16} />
                       </button>
-                      <button
-                        onClick={() => update(r.id, "Rejected")}
-                        className="p-2 hover:bg-rose-50 hover:shadow-sm rounded-xl transition-all text-slate-400 hover:text-rose-600 border border-transparent hover:border-rose-100"
-                        title="Reject"
-                      >
+                        <button
+                          onClick={() => update(r.id, "Rejected")}
+                          className="p-2 hover:bg-rose-50 hover:shadow-sm rounded-xl transition-all text-slate-400 hover:text-rose-600 border border-transparent hover:border-rose-100"
+                          title="Reject"
+                          data-testid="reject-request-btn"
+                        >
                         <XCircle size={16} />
                       </button>
                     </div>

@@ -1,32 +1,16 @@
-/**
- * Vitest Configuration for Frontend Testing
- * 
- * This configuration sets up Vitest for testing React components.
- * It includes:
- * - jsdom environment (browser-like environment)
- * - Setup files for test initialization
- * - Coverage reporting
- */
-
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 
 export default defineConfig({
-  // Enable React plugin for JSX syntax
   plugins: [react()],
-  
   test: {
-    // Use global test functions (describe, it, expect) without importing
     globals: true,
-    
-    // Run tests in jsdom environment (simulates browser)
     environment: 'jsdom',
-    
-    // Set environment variables for tests
     env: {
       VITE_API_URL: 'http://localhost:5001/api',
     },
+<<<<<<< HEAD:src/frontend/vitest.config.js
     
     // Run setup files before all tests
     setupFiles: [path.resolve(__dirname, '../../tests/frontend/setup.js')],
@@ -35,29 +19,23 @@ export default defineConfig({
     include: [path.resolve(__dirname, '../../tests/frontend/**/*.test.{js,jsx}').replace(/\\/g, '/')],
     
     // Coverage reporting configuration
+=======
+    setupFiles: ['./src/__tests__/setup.js', './setupTests.js'],
+>>>>>>> 86217cecd5a32e74f39b2ca30b12e17dd9b885d4:frontend/vitest.config.js
     coverage: {
-      // Use v8 for coverage (pre-installed with vitest)
       provider: 'v8',
-      
-      // Generate multiple report formats
       reporter: ['text', 'json', 'html', 'lcov'],
-      
-      // Exclude test files from coverage
       exclude: [
         'node_modules/',
         '../../tests/frontend/',
         '**/*.test.jsx',
       ],
-      
-      // Minimum coverage thresholds
       lines: 70,
       functions: 70,
       branches: 70,
       statements: 70,
     },
   },
-  
-  // Path aliases for cleaner imports
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
