@@ -42,7 +42,7 @@ async function main() {
   console.log('🧹 Purging old test data for a clean start...');
   try {
     execSync('node total_wipe_jobs.js', { 
-      cwd: path.resolve(__dirname, '../../backend'), 
+      cwd: path.resolve(__dirname, '../../../src/backend'), 
       stdio: 'inherit',
       shell: true 
     });
