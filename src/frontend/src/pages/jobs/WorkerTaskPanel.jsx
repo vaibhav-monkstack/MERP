@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 
 // Base URL for all API requests (uses environment variable if available)
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // ============================================================
 // WORKER TASK PANEL — Detailed task management view for a specific job

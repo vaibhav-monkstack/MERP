@@ -31,7 +31,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
       // Send POST request to the login API endpoint
       const response = await axios.post(`${API_BASE}/auth/login`, {

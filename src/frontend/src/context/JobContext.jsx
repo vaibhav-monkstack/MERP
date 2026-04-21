@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 // Any component wrapped in JobProvider can access this context's values
 const JobContext = createContext();
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // Custom hook — makes it easy to access the JobContext from any component
 // Usage: const { jobs, addJob, updateJob } = useJobs();

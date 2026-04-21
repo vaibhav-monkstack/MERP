@@ -3,9 +3,9 @@ import axios from "axios";
 // Safe access to import.meta.env for testing compatibility
 const baseURL = (() => {
   try {
-    return import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+    return import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
   } catch {
-    return 'http://localhost:5001/api';
+    return 'http://localhost:5000/api';
   }
 })();
 

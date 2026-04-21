@@ -26,7 +26,7 @@ const WorkerDashboard = () => {
   const [filter, setFilter] = useState('All Tasks');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
   useEffect(() => {
     if (!token || role !== 'Production Staff') {

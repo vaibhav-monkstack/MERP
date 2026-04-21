@@ -17,6 +17,9 @@ exports.login = async (req, res) => {
       [username]
     );
 
+    console.log('[DEBUG] Login attempt for:', username);
+    console.log('[DEBUG] User found in DB:', rows.length > 0 ? 'YES' : 'NO');
+
     if (rows.length === 0) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }

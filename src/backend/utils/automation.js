@@ -112,21 +112,32 @@ async function handleOrderApproved(orderId) {
       ]
     );
 
-    // 4. Create Job Parts & Tasks
-    const [workers] = await pool.query("SELECT name FROM users WHERE role = 'Production Staff'");
-    
-    for (let i = 0; i < templateParts.length; i++) {
-      const part = templateParts[i];
-      await pool.query('INSERT INTO job_parts (jobId, name, requiredQty) VALUES (?, ?, ?)',
-        [newJobId, part.part_name, part.qty_per_unit * order.quantity]);
+      // 4. Create Job Parts, Tasks & Inventory Requests
+      const [workers] = await pool.query("SELECT name FROM users WHERE role = 'Production Staff'");
+      
+      for (let i = 0; i < templateParts.length; i++) {
+        const part = templateParts[i];
+        const requiredQty = part.qty_per_unit * order.quantity;
 
-      const assignedWorker = workers.length > 0 ? workers[i % workers.length].name : '';
-      const taskId = `T-${Date.now()}-${i}`;
-      await pool.query(
-        'INSERT INTO tasks (taskId, jobId, jobName, partName, worker, status, deadline) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [taskId, newJobId, order.item_name, part.part_name, assignedWorker, 'Pending', order.deadline]
-      );
-    }
+        // Create Job Part
+        await pool.query('INSERT INTO job_parts (jobId, name, requiredQty) VALUES (?, ?, ?)',
+          [newJobId, part.part_name, requiredQty]);
+
+        // Create Task for worker
+        const assignedWorker = workers.length > 0 ? workers[i % workers.length].name : '';
+        const taskId = `T-${Date.now()}-${i}`;
+        await pool.query(
+          'INSERT INTO tasks (taskId, jobId, jobName, partName, worker, status, deadline) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          [taskId, newJobId, order.item_name, part.part_name, assignedWorker, 'Pending', order.deadline]
+        );
+
+        // CREATE INVENTORY REQUEST (NEW: This was the missing link)
+        const requestId = `REQ-JOB-${newJobId}-${i}`;
+        await pool.query(
+          'INSERT INTO requests (request_id, job_id, order_id, material, quantity, requested_by) VALUES (?, ?, ?, ?, ?, ?)',
+          [requestId, newJobId, orderId, part.part_name, requiredQty, 'System Automation']
+        );
+      }
 
     // 5. Explicitly update order status to 'processing'
     await pool.query('UPDATE orders SET status = "processing" WHERE id = ?', [orderId]);
