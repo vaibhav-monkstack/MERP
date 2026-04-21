@@ -33,7 +33,7 @@ services:
       #    This means VITE_API_URL can be set to just /api (relative)
       - type: rewrite
         source: /api/*
-        destination: https://merp-backend.onrender.com/api/:splat
+        destination: https://merp-backend.onrender.com/api/*
       # 2. SPA fallback — serves index.html for all non-file routes
       #    Required for React Router to handle client-side navigation
       - type: rewrite
