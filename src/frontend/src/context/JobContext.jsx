@@ -1,7 +1,7 @@
 // Import React hooks and utilities needed for context management
 import React, { createContext, useState, useContext, useEffect } from 'react';
-// Import axios for making HTTP API requests to the backend
-import axios from 'axios';
+// Import API from the central config
+import API, { API_BASE } from '../api/api';
 // Import toast for notifications
 import toast from 'react-hot-toast';
 
@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 // Any component wrapped in JobProvider can access this context's values
 const JobContext = createContext();
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 
 // Custom hook — makes it easy to access the JobContext from any component
 // Usage: const { jobs, addJob, updateJob } = useJobs();
@@ -39,9 +39,10 @@ export const JobProvider = ({ children }) => {
         };
         
         const [jobsRes, qcRes] = await Promise.all([
-          axios.get(`${API_BASE}/jobs`, config),
-          axios.get(`${API_BASE}/qc`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] }))
+          API.get('/jobs', config),
+          API.get('/qc').catch(() => ({ data: [] }))
         ]);
+
         
         // Handle paginated or non-paginated response gracefully
         if (jobsRes.data.jobs) {
@@ -70,11 +71,10 @@ export const JobProvider = ({ children }) => {
     try {
       const token = localStorage.getItem('token');
       if (token) {
-        const response = await axios.get(`${API_BASE}/jobs/pending-orders`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await API.get('/jobs/pending-orders');
         setPendingOrders(response.data);
       }
+
     } catch (error) {
       console.error('Error fetching pending orders:', error);
     }
@@ -86,9 +86,8 @@ export const JobProvider = ({ children }) => {
       const token = localStorage.getItem('token'); // Get auth token
       if (token) {
         // Send POST request to create the job on the backend
-        const response = await axios.post(`${API_BASE}/jobs`, jobData, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await API.post('/jobs', jobData);
+
         // Add the newly created job to the local state array
         setJobs(prev => [...prev, response.data.job]);
         toast.success('Job created successfully!');
@@ -107,9 +106,8 @@ export const JobProvider = ({ children }) => {
       const token = localStorage.getItem('token');
       if (token) {
         // Send PUT request to update the job on the backend
-        await axios.put(`${API_BASE}/jobs/${id}`, updatedData, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await API.put(`/jobs/${id}`, updatedData);
+
         // Update the job in local state
         setJobs(prev => prev.map(job => job.id === id ? { ...job, ...updatedData } : job));
         toast.success('Job updated successfully!');
@@ -127,9 +125,8 @@ export const JobProvider = ({ children }) => {
       const token = localStorage.getItem('token');
       if (token) {
         // Send DELETE request to remove the job from the backend database
-        await axios.delete(`${API_BASE}/jobs/${id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await API.delete(`/jobs/${id}`);
+
         // Remove the job from local state by filtering it out
         setJobs(prev => prev.filter(job => job.id !== id));
       }
@@ -144,9 +141,8 @@ export const JobProvider = ({ children }) => {
     try {
       const token = localStorage.getItem('token');
       if (token) {
-        await axios.post(`${API_BASE}/jobs/${id}/approve`, {}, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await API.post(`/jobs/${id}/approve`, {});
+
         // Update local status to 'Production'
         setJobs(prev => prev.map(job => job.id === id ? { ...job, status: 'Production' } : job));
         toast.success(`Job ${id} approved! Production started.`);
@@ -168,9 +164,8 @@ export const JobProvider = ({ children }) => {
       const token = localStorage.getItem('token');
       if (token) {
         // Send POST request to create the QC record
-        const response = await axios.post(`${API_BASE}/qc`, record, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await API.post('/qc', record);
+
         // Add the new record to the beginning of the local state array (newest first)
         setQCRecords(prev => [response.data.record, ...prev]);
         toast.success('Quality check record saved!');
@@ -191,11 +186,10 @@ export const JobProvider = ({ children }) => {
     try {
       const token = localStorage.getItem('token');
       if (token) {
-        const response = await axios.get(`${API_BASE}/jobs/preview-init/${orderId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await API.get(`/jobs/preview-init/${orderId}`);
         return response.data.data;
       }
+
     } catch (error) {
       console.error('Error fetching job preview:', error);
       toast.error('Failed to load job plan preview');
@@ -208,9 +202,8 @@ export const JobProvider = ({ children }) => {
     try {
       const token = localStorage.getItem('token');
       if (token) {
-        await axios.post(`${API_BASE}/jobs/manual-init/${orderId}`, {}, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await API.post(`/jobs/manual-init/${orderId}`, {});
+
         toast.success(`Job initialized for Order #${orderId}!`);
         // Refresh jobs and pending orders
         await fetchData();

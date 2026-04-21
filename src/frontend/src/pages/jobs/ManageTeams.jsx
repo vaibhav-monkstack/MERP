@@ -2,8 +2,8 @@
 import React, { useState, useEffect } from 'react';
 // Import navigation hook for page redirects
 import { useNavigate } from 'react-router-dom';
-// Import axios for making HTTP API requests to the backend
-import axios from 'axios';
+// Import API from the central config
+import API from '../../api/api';
 // Import icons from lucide-react for UI elements
 import {
   ChevronLeft,   // Back button chevron
@@ -21,8 +21,7 @@ import {
   Search         // Search icon
 } from 'lucide-react';
 
-// Base URL for all API requests (backend server)
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 
 // ============================================================
 // MANAGE TEAMS PAGE — Team and worker management for Job Managers
@@ -79,8 +78,8 @@ const ManageTeams = () => {
     try {
       // Fetch both endpoints simultaneously for better performance
       const [teamRes, workerRes] = await Promise.all([
-        axios.get(`${API_BASE}/teams`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`${API_BASE}/teams/workers`, { headers: { Authorization: `Bearer ${token}` } })
+        API.get('/teams'),
+        API.get('/teams/workers')
       ]);
       setTeams(teamRes.data);    // Store teams data
       setWorkers(workerRes.data); // Store workers data
@@ -103,8 +102,7 @@ const ManageTeams = () => {
   const handleCreateTeam = async () => {
     if (!newTeamName.trim()) return;
     try {
-      await axios.post(`${API_BASE}/teams`, { name: newTeamName },
-        { headers: { Authorization: `Bearer ${token}` } });
+      await API.post('/teams', { name: newTeamName });
       setNewTeamName('');
       setShowCreateTeam(false);
       showFeedback(`Team "${newTeamName}" created successfully!`);
@@ -114,11 +112,11 @@ const ManageTeams = () => {
     }
   };
 
+
   const handleUpdateTeam = async () => {
     if (!editTeamName.trim() || !editingTeam) return;
     try {
-      await axios.put(`${API_BASE}/teams/${editingTeam}`, { name: editTeamName },
-        { headers: { Authorization: `Bearer ${token}` } });
+      await API.put(`/teams/${editingTeam}`, { name: editTeamName });
       setEditingTeam(null);
       setEditTeamName('');
       showFeedback('Team name updated!');
@@ -130,8 +128,7 @@ const ManageTeams = () => {
 
   const handleDeleteTeam = async (teamId, teamName) => {
     try {
-      await axios.delete(`${API_BASE}/teams/${teamId}`,
-        { headers: { Authorization: `Bearer ${token}` } });
+      await API.delete(`/teams/${teamId}`);
       showFeedback(`Team "${teamName}" deleted.`);
       fetchAll();
     } catch (error) {
@@ -139,11 +136,11 @@ const ManageTeams = () => {
     }
   };
 
+
   // === Member Operations ===
   const handleAddMember = async (userId) => {
     try {
-      await axios.post(`${API_BASE}/teams/${addMemberTeamId}/members`, { userId },
-        { headers: { Authorization: `Bearer ${token}` } });
+      await API.post(`/teams/${addMemberTeamId}/members`, { userId });
       showFeedback('Member added successfully!');
       fetchAll();                       // Refresh to show updated member list
     } catch (error) {
@@ -154,8 +151,7 @@ const ManageTeams = () => {
   // REMOVE MEMBER — Removes a worker from a team (does NOT delete the worker account)
   const handleRemoveMember = async (teamId, userId, name) => {
     try {
-      await axios.delete(`${API_BASE}/teams/${teamId}/members/${userId}`,
-        { headers: { Authorization: `Bearer ${token}` } });
+      await API.delete(`/teams/${teamId}/members/${userId}`);
       showFeedback(`${name} removed from team.`);
       fetchAll();                       // Refresh to show updated member list
     } catch (error) {
@@ -163,14 +159,14 @@ const ManageTeams = () => {
     }
   };
 
+
   // === WORKER OPERATIONS ===
 
   // CREATE WORKER — Creates a new Production Staff user account
   const handleCreateWorker = async () => {
     if (!newWorker.name.trim() || !newWorker.email.trim() || !newWorker.password.trim()) return;
     try {
-      await axios.post(`${API_BASE}/teams/workers`, newWorker,
-        { headers: { Authorization: `Bearer ${token}` } });
+      await API.post('/teams/workers', newWorker);
       setNewWorker({ name: '', email: '', password: '' });
       setShowCreateWorker(false);
       showFeedback(`Worker "${newWorker.name}" created successfully!`);
@@ -179,6 +175,7 @@ const ManageTeams = () => {
       showFeedback(error.response?.data?.message || 'Error creating worker', 'error');
     }
   };
+
 
   const getInitials = (name) => {
     return name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : '?';

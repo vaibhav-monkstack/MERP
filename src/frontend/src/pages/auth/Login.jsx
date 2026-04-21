@@ -1,7 +1,7 @@
 // Import React and useState hook for managing component state
 import React, { useState } from 'react';
 // Import axios for making HTTP API requests to the backend
-import axios from 'axios';
+import API from '../../api/api';
 // Import useNavigate for programmatic page navigation
 import { useNavigate } from 'react-router-dom';
 // Import icons from lucide-react for visual elements
@@ -31,13 +31,12 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-
-      // Send POST request to the login API endpoint
-      const response = await axios.post(`${API_BASE}/auth/login`, {
+      // Send POST request to the login API endpoint using central API instance
+      const response = await API.post('/auth/login', {
         username: email,   // Validated by server
         password: password
       });
+
 
       const { token, role: userRole, userId, userName } = response.data;
       

@@ -3,7 +3,7 @@ import { Package, Plus, Trash2, Edit2, ChevronDown, ChevronUp, Save, X, Layers }
 import TopHeader from '../../components/TopHeader';
 import { useNavigate } from 'react-router-dom';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+import { API_BASE } from '../../api/api';
 
 export default function ProductTemplates() {
   const navigate = useNavigate();

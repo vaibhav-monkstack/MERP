@@ -5,7 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 // Import the shared job context for job data
 import { useJobs } from '../../context/JobContext';
 // Import axios for making HTTP API requests
-import axios from 'axios';
+import API from '../../api/api';
 // Import icons used in the task panel UI
 import {
   LogOut,         // Logout button
@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 
 // Base URL for all API requests (uses environment variable if available)
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 
 // ============================================================
 // WORKER TASK PANEL — Detailed task management view for a specific job
@@ -67,12 +67,11 @@ const WorkerTaskPanel = () => {
   // Fetch tasks from the backend (filtered by job ID if one is provided)
   const fetchTasks = async (retryCount = 0) => {
     try {
-      const url = id ? `${API_BASE}/tasks?jobId=${id}` : `${API_BASE}/tasks`;
-      const response = await axios.get(url, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const url = id ? `/tasks?jobId=${id}` : `/tasks`;
+      const response = await API.get(url);
       
       const fetchedTasks = response.data;
+
       setTasks(fetchedTasks);
 
       // Self-healing: If viewing a specific job and no tasks found, retry a few times
@@ -92,9 +91,8 @@ const WorkerTaskPanel = () => {
     try {
       // If viewing a specific job with an assigned team, get that team's members
       if (id && currentJob.team) {
-        const teamRes = await axios.get(`${API_BASE}/teams`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const teamRes = await API.get('/teams');
+
         // Find the team matching this job's assigned team
         const jobTeam = teamRes.data.find(t => t.name === currentJob.team);
         if (jobTeam && jobTeam.members.length > 0) {
@@ -102,23 +100,18 @@ const WorkerTaskPanel = () => {
           setTeamWorkers(jobTeam.members.map(m => m.name));
         } else {
           // Fallback: if team has no members, show all workers
-          const workerRes = await axios.get(`${API_BASE}/teams/workers`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
+          const workerRes = await API.get('/teams/workers');
           setTeamWorkers(workerRes.data.map(w => w.name));
         }
       } else {
         // No specific job — show all workers
-        const workerRes = await axios.get(`${API_BASE}/teams/workers`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const workerRes = await API.get('/teams/workers');
         setTeamWorkers(workerRes.data.map(w => w.name));
       }
 
       // Also fetch all workers for the assign task dropdown
-      const workerRes = await axios.get(`${API_BASE}/teams/workers`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const workerRes = await API.get('/teams/workers');
+
       setAllWorkers(workerRes.data);
     } catch (error) {
       console.error('Error fetching workers', error);
@@ -135,10 +128,8 @@ const WorkerTaskPanel = () => {
   const handleStatusChange = async (taskId, newStatus) => {
     try {
       // Send PUT request to update the task status
-      const response = await axios.put(`${API_BASE}/tasks/${taskId}`,
-        { status: newStatus },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await API.put(`/tasks/${taskId}`, { status: newStatus });
+
 
       const updatedTask = response.data.task;
       // Update the task in local state immediately
@@ -156,14 +147,13 @@ const WorkerTaskPanel = () => {
 
     try {
       // Send POST request to create the new task
-      const response = await axios.post(`${API_BASE}/tasks`, {
+      const response = await API.post('/tasks', {
         jobId: id,                          // Parent job ID
         partName: newTask.partName,          // Task name
         worker: newTask.worker,              // Assigned worker name
         deadline: newTask.deadline || null   // Optional deadline
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
       });
+
 
       // Add the new task to local state
       setTasks(prev => [...prev, response.data]);

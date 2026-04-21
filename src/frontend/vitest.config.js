@@ -8,7 +8,7 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     env: {
-      VITE_API_URL: 'http://localhost:5001/api',
+      VITE_API_URL: 'http://localhost:5000/api',
     },
     // Run unified setup files before all tests
     setupFiles: [

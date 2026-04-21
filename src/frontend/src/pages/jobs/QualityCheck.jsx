@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 // Import the shared job context for job data and QC record operations
 import { useJobs } from '../../context/JobContext';
-import axios from 'axios';
+import API from '../../api/api';
 // Import various icons used throughout the QC page UI
 import { 
   ArrowLeft,        // Back button icon
@@ -28,7 +28,7 @@ import {
 // and the job status changes to "Rework".
 // ============================================================
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 
 const QualityCheck = () => {
   const { id } = useParams();           // Get the job ID from the URL (e.g., /job/JOB-001/qc)
@@ -63,14 +63,13 @@ const QualityCheck = () => {
   useEffect(() => {
     const fetchTeams = async () => {
       try {
-        const res = await axios.get(`${API_BASE}/teams`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });
+        const res = await API.get('/teams');
         setAvailableTeams(res.data || []);
       } catch (err) {
         console.error('Failed to fetch teams:', err);
       }
     };
+
     fetchTeams();
   }, []);
 

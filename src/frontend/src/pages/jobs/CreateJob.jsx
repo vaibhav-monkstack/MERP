@@ -6,7 +6,7 @@ import { useJobs } from '../../context/JobContext';
 // Import icons
 import { ArrowLeft, Layers, Zap } from 'lucide-react';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+import { API_BASE } from '../../api/api';
 
 // ============================================================
 // CREATE JOB PAGE — Form for creating a new manufacturing job
@@ -98,7 +98,6 @@ const CreateJob = () => {
     const fetchTeams = async () => {
       try {
         const token = localStorage.getItem('token');
-        const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
         const response = await fetch(`${API_BASE}/teams`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });

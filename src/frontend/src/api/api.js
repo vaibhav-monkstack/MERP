@@ -1,8 +1,9 @@
 import axios from "axios";
 
-// Safe access to import.meta.env for testing compatibility
-const baseURL = (() => {
+// Standardize API URL collection
+export const API_BASE = (() => {
   try {
+    // Priority: 1. Env Var, 2. Local Fallback (Standardized to 5000)
     return import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
   } catch {
     return 'http://localhost:5000/api';
@@ -10,7 +11,7 @@ const baseURL = (() => {
 })();
 
 const API = axios.create({
-  baseURL: baseURL,
+  baseURL: API_BASE,
 });
 
 // Add a request interceptor to attach the JWT token to every request
@@ -24,4 +25,4 @@ API.interceptors.request.use((config) => {
   return Promise.reject(error);
 });
 
-export default API;
+export default API;

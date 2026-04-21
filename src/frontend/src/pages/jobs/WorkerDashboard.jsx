@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import API from '../../api/api';
 import {
   LogOut,
   ClipboardList,
@@ -26,7 +26,7 @@ const WorkerDashboard = () => {
   const [filter, setFilter] = useState('All Tasks');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 
   useEffect(() => {
     if (!token || role !== 'Production Staff') {
@@ -47,11 +47,9 @@ const WorkerDashboard = () => {
 
   const fetchData = async () => {
     try {
-      const taskRes = await axios.get(
-        `${API_BASE}/tasks?worker=${encodeURIComponent(userName)}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const taskRes = await API.get(`/tasks?worker=${encodeURIComponent(userName)}`);
       setTasks(taskRes.data);
+
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
@@ -61,11 +59,8 @@ const WorkerDashboard = () => {
 
   const handleStatusChange = async (taskId, newStatus) => {
     try {
-      const response = await axios.put(
-        `${API_BASE}/tasks/${taskId}`,
-        { status: newStatus },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await API.put(`/tasks/${taskId}`, { status: newStatus });
+
       const updatedTask = response.data.task;
       setTasks(prev =>
         prev.map(task =>
