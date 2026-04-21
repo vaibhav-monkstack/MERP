@@ -1,0 +1,30 @@
+services:
+  # Backend Web Service
+  - type: web
+    name: merp-backend
+    runtime: node
+    rootDir: src/backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5001
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false # Set manually in Render dashboard from Railway
+      - key: FRONTEND_URL
+        sync: false # Set manually once frontend is deployed
+
+  # Frontend Static Site
+  - type: static
+    name: merp-frontend
+    runtime: static
+    rootDir: src/frontend
+    buildCommand: npm install && npm run build
+    publishDir: dist
+    envVars:
+      - key: VITE_API_URL
+        sync: false # Set to https://merp-backend.onrender.com/api

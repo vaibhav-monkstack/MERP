@@ -59,7 +59,7 @@ describe('Order Controller Backend Unit Tests', () => {
 
     await getOrderStats(req, res);
 
-    expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('SELECT'), undefined);
+    expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('SELECT'));
     expect(res.json).toHaveBeenCalledWith({ success: true, data: mockStats });
   });
 
