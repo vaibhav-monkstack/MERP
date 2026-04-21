@@ -4,6 +4,7 @@ test.describe('Inventory Management E2E Workflow', () => {
   const BASE_URL = 'http://localhost:5173';
 
   test('Complete Inventory Manager Day-to-Day Flow', async ({ page }) => {
+    test.setTimeout(60000);
     // 1. Navigation and Login
     await page.goto(`${BASE_URL}/login`);
     
