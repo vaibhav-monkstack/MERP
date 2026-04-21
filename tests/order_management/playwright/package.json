@@ -1,0 +1,11 @@
+{
+  "name": "order-management-integration-tests",
+  "version": "1.0.0",
+  "description": "Integration tests for Order-Job-Inventory workflow",
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
+  },
+  "scripts": {
+    "test": "playwright test"
+  }
+}

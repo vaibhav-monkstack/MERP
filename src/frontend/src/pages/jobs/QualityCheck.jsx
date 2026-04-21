@@ -28,7 +28,7 @@ import {
 // and the job status changes to "Rework".
 // ============================================================
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const QualityCheck = () => {
   const { id } = useParams();           // Get the job ID from the URL (e.g., /job/JOB-001/qc)

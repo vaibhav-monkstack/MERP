@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 
 // Base URL for all API requests (backend server)
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // ============================================================
 // MANAGE TEAMS PAGE — Team and worker management for Job Managers

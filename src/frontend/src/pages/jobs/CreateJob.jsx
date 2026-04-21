@@ -6,7 +6,7 @@ import { useJobs } from '../../context/JobContext';
 // Import icons
 import { ArrowLeft, Layers, Zap } from 'lucide-react';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // ============================================================
 // CREATE JOB PAGE — Form for creating a new manufacturing job

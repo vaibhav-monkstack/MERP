@@ -2,30 +2,26 @@ const mysql = require('mysql2/promise');
 require('dotenv').config();
 
 // Create a modern Promise-based connection pool
-const poolConfig = process.env.DATABASE_URL 
-  ? {
-      uri: process.env.DATABASE_URL,
-      waitForConnections: true,
-      connectionLimit: 10,
-      queueLimit: 0,
-      enableKeepAlive: true,
-      keepAliveInitialDelay: 0
-    }
-  : {
-      host:               process.env.DB_HOST || 'localhost',
-      port:               process.env.DB_PORT || 3306,
-      user:               process.env.DB_USER || 'root',
-      password:           process.env.DB_PASSWORD || '',
-      database:           process.env.DB_NAME || 'job_management',
-      waitForConnections: true,
-      connectionLimit:    10,
-      queueLimit:         0,
-      connectTimeout:     20000,
-      enableKeepAlive:    true,
-      keepAliveInitialDelay: 0
-    };
-
-const pool = mysql.createPool(poolConfig);
+let pool;
+if (process.env.DATABASE_URL) {
+  // Use connection string directly as mysql2 expects a string for URIs
+  pool = mysql.createPool(process.env.DATABASE_URL);
+} else {
+  const poolConfig = {
+    host:               process.env.DB_HOST || 'localhost',
+    port:               process.env.DB_PORT || 3306,
+    user:               process.env.DB_USER || 'root',
+    password:           process.env.DB_PASSWORD || '',
+    database:           process.env.DB_NAME || 'job_management',
+    waitForConnections: true,
+    connectionLimit:    10,
+    queueLimit:         0,
+    connectTimeout:     20000,
+    enableKeepAlive:    true,
+    keepAliveInitialDelay: 0
+  };
+  pool = mysql.createPool(poolConfig);
+}
 
 // Automatic Table Initialization (Self-executing for platform safety)
 // This ensures that the DB schema is ready even if it's a fresh deployment
