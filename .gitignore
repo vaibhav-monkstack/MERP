@@ -47,3 +47,10 @@ pnpm-debug.log*
 *.sln
 *.sw?
 Thumbs.db
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/

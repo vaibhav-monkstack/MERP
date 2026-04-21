@@ -70,6 +70,7 @@ export default function RequestForm({ fetchData }) {
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Job ID</label>
           <input
+            id="job-id-input"
             placeholder="e.g. JOB-001"
             value={form.job_id}
             onChange={(e) => setForm({...form, job_id: e.target.value})}
@@ -83,6 +84,7 @@ export default function RequestForm({ fetchData }) {
           <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Material</label>
           <div className="relative">
             <select
+              id="material-select"
               value={form.material}
               onChange={handleMaterialChange}
               className="w-full bg-slate-50 border-none rounded-2xl py-3 px-4 pr-10 text-sm font-medium focus:ring-2 focus:ring-indigo-500 transition-all appearance-none"
@@ -109,6 +111,7 @@ export default function RequestForm({ fetchData }) {
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Quantity</label>
           <input
+            id="quantity-input"
             type="number"
             placeholder="0"
             value={form.quantity}
@@ -121,6 +124,7 @@ export default function RequestForm({ fetchData }) {
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Requested By</label>
           <input
+            id="requester-input"
             placeholder="Your name"
             value={form.requested_by}
             onChange={(e) => setForm({...form, requested_by: e.target.value})}
