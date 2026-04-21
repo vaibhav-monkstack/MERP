@@ -28,3 +28,14 @@ services:
     envVars:
       - key: VITE_API_URL
         sync: false # Set to https://merp-backend.onrender.com/api
+    routes:
+      # 1. Proxy /api/* requests to the backend service
+      #    This means VITE_API_URL can be set to just /api (relative)
+      - type: rewrite
+        source: /api/*
+        destination: https://merp-backend.onrender.com/api/:splat
+      # 2. SPA fallback — serves index.html for all non-file routes
+      #    Required for React Router to handle client-side navigation
+      - type: rewrite
+        source: /*
+        destination: /index.html
